@@ -269,24 +269,6 @@ table.dt td.unit-name { text-align:left; }
           </div>
         </div>
         <div class="card">
-          <h2>Lũy kế năm đánh giá</h2>
-          <select id="fiscal-eval-year-select" class="form-control" style="margin-bottom:8px;" onchange="onFiscalEvalYearChange()"></select>
-          <div class="form-group" style="margin-bottom:10px;">
-            <label>Tính đến tháng</label>
-            <select id="fiscal-upto-month-select" class="form-control" style="font-size:11px;" onchange="onFiscalUptoMonthChange()"></select>
-          </div>
-          <div class="big-metric">
-            <div class="lbl">Tỷ lệ lũy kế</div>
-            <div class="val" id="home-fiscal-tyle">--</div>
-            <div id="home-fiscal-badge"></div>
-          </div>
-          <div class="stat-grid">
-            <div class="stat-box"><div class="n" id="home-fiscal-soluot">0</div><div class="l">Lũy kế lượt đánh giá</div></div>
-            <div class="stat-box"><div class="n" id="home-fiscal-tongtthc">0</div><div class="l">Lũy kế hồ sơ TTHC</div></div>
-          </div>
-          <div class="chart-wrap" style="height:230px; margin-top:6px;"><canvas id="fiscal-chart"></canvas></div>
-        </div>
-        <div class="card">
           <h2>Lịch sử báo cáo</h2>
           <div id="home-history-list"></div>
         </div>
@@ -330,31 +312,24 @@ table.dt td.unit-name { text-align:left; }
       <div class="content-pad">
         <div class="page-title-row">
           <button class="back-btn" onclick="showUserSub('home')"><i class="fa-solid fa-chevron-left"></i></button>
-          <h2 class="page-title">Lũy kế kết quả</h2>
+          <h2 class="page-title">Lũy kế năm đánh giá</h2>
         </div>
         <div class="card">
-          <div class="form-group">
-            <label>Lũy kế đến tháng</label>
-            <select id="cum-month-select" class="form-control" onchange="renderUserCumulative()"></select>
+          <select id="fiscal-eval-year-select" class="form-control" style="margin-bottom:8px;" onchange="onFiscalEvalYearChange()"></select>
+          <div class="form-group" style="margin-bottom:10px;">
+            <label>Tính đến tháng</label>
+            <select id="fiscal-upto-month-select" class="form-control" style="font-size:11px;" onchange="onFiscalUptoMonthChange()"></select>
           </div>
-          <p class="note" id="cum-range-note" style="margin-bottom:10px;"></p>
           <div class="big-metric">
             <div class="lbl">Tỷ lệ lũy kế</div>
-            <div class="val" id="cum-tyle">--</div>
-            <div id="cum-badge"></div>
+            <div class="val" id="home-fiscal-tyle">--</div>
+            <div id="home-fiscal-badge"></div>
           </div>
           <div class="stat-grid">
-            <div class="stat-box"><div class="n" id="cum-soluot">0</div><div class="l">Lũy kế lượt đánh giá</div></div>
-            <div class="stat-box"><div class="n" id="cum-tongtthc">0</div><div class="l">Lũy kế hồ sơ TTHC</div></div>
+            <div class="stat-box"><div class="n" id="home-fiscal-soluot">0</div><div class="l">Lũy kế lượt đánh giá</div></div>
+            <div class="stat-box"><div class="n" id="home-fiscal-tongtthc">0</div><div class="l">Lũy kế hồ sơ TTHC</div></div>
           </div>
-        </div>
-        <div class="card">
-          <h2>Diễn biến theo tháng</h2>
-          <div class="chart-wrap"><canvas id="cum-chart"></canvas></div>
-        </div>
-        <div class="card">
-          <h2>Chi tiết từng tháng</h2>
-          <div id="cum-detail-list"></div>
+          <div class="chart-wrap" style="height:230px; margin-top:6px;"><canvas id="fiscal-chart"></canvas></div>
         </div>
       </div>
     </div>
@@ -703,8 +678,8 @@ table.dt td.unit-name { text-align:left; }
 <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-auth-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
 // =====================================================================
@@ -729,7 +704,6 @@ const DANH_SACH_129_DON_VI = ["Phòng Hồ sơ nghiệp vụ", "Phòng Cảnh s�
 let currentRole = null;
 let currentUserDoc = null;
 let unitCatalog = [];
-let cumChartInstance = null;
 let fiscalChartInstance = null;
 let ovChartInstance = null;
 let v03ImportRows = null;
@@ -934,7 +908,7 @@ function showUserSub(name){
     });
     if (name==='home') loadUserHome();
     if (name==='input') { populateInputMonthSelect(); loadInputForMonth(); }
-    if (name==='cumulative') { populateMonthSelect(document.getElementById('cum-month-select'), 12); renderUserCumulative(); }
+    if (name==='cumulative') loadUserFiscalTab();
     if (name==='account') loadAccountInfo();
     if (name==='reminder') loadReminderScreen();
 }
@@ -1173,13 +1147,6 @@ function loadUserHome(){
         }
 
         try {
-            const currentEvalYear = fiscalYearRange(currentReportingMonthKey()).evalYear;
-            populateFiscalEvalYearSelect(rows, currentEvalYear);
-            populateFiscalUptoMonthSelect(Number(document.getElementById('fiscal-eval-year-select').value));
-            renderFiscalForSelection();
-        } catch(err){ console.error('[loadUserHome] Lỗi khi tính lũy kế năm đánh giá:', err); }
-
-        try {
         const list = document.getElementById('home-history-list');
         list.innerHTML = rows.slice(0,6).map(r => `
             <div class="list-row" style="flex-direction:column; align-items:stretch; gap:6px;">
@@ -1199,6 +1166,23 @@ function loadUserHome(){
         showLoading(false);
         console.error('[loadUserHome] Lỗi khi tải dữ liệu:', err);
         customAlert('Không tải được dữ liệu trang chủ: ' + err.message, 'error');
+    });
+}
+function loadUserFiscalTab(){
+    showLoading(true);
+    Promise.all([getUnitReports(), getUnitOfficial()]).then(([rawRows, officialMap])=>{
+        showLoading(false);
+        userHomeRows = mergeReportsWithOfficial(rawRows, officialMap);
+        try {
+            const currentEvalYear = fiscalYearRange(currentReportingMonthKey()).evalYear;
+            populateFiscalEvalYearSelect(userHomeRows, currentEvalYear);
+            populateFiscalUptoMonthSelect(Number(document.getElementById('fiscal-eval-year-select').value));
+            renderFiscalForSelection();
+        } catch(err){ console.error('[loadUserFiscalTab] Lỗi khi tính lũy kế năm đánh giá:', err); }
+    }).catch(err=>{
+        showLoading(false);
+        console.error('[loadUserFiscalTab] Lỗi khi tải dữ liệu:', err);
+        customAlert('Không tải được dữ liệu lũy kế: ' + err.message, 'error');
     });
 }
 function populateInputMonthSelect(){
@@ -1267,46 +1251,6 @@ function saveMonthlyReport(){
         populateInputMonthSelect();
         loadInputForMonth();
     }).catch(err=>{ showLoading(false); customAlert('Lỗi: '+err.message, 'error'); });
-}
-
-function renderUserCumulative(){
-    const mKey = document.getElementById('cum-month-select').value;
-    const year = yearOf(mKey);
-    showLoading(true);
-    Promise.all([getUnitReports(), getUnitOfficial()]).then(([rawRows, officialMap])=>{
-        showLoading(false);
-        const merged = mergeReportsWithOfficial(rawRows, officialMap);
-        const inRange = merged.filter(r => r.monthKey.startsWith(year) && r.monthKey <= mKey);
-        inRange.sort((a,b)=> a.monthKey.localeCompare(b.monthKey));
-        const withOfficial = inRange.filter(r=>r.hasOfficial);
-        const totalS = withOfficial.reduce((s,r)=>s+r.soLuot,0);
-        const totalT = withOfficial.reduce((s,r)=>s+r.tongTTHC,0);
-        const tyLe = totalT>0 ? totalS/totalT*100 : 0;
-        const missingCount = inRange.length - withOfficial.length;
-        document.getElementById('cum-range-note').innerText = `Cộng dồn từ tháng 1 đến ${monthLabel(mKey).toLowerCase()}`
-            + (missingCount ? ` (${missingCount} tháng chưa có số liệu chính thức V03, tạm chưa tính)` : '');
-        document.getElementById('cum-tyle').innerText = totalT>0 ? fmtPct(tyLe) : '--';
-        document.getElementById('cum-badge').innerHTML = totalT>0 ? badgeHtml(tyLe>=60) : '';
-        document.getElementById('cum-soluot').innerText = fmtInt(totalS);
-        document.getElementById('cum-tongtthc').innerText = fmtInt(totalT);
-        const detailList = document.getElementById('cum-detail-list');
-        const recent = [...inRange].reverse();
-        detailList.innerHTML = recent.map(r=>`
-            <div class="list-row">
-                <div><div class="title">${monthLabel(r.monthKey)}</div><div class="sub">${r.hasOfficial ? fmtInt(r.soLuot)+' / '+fmtInt(r.tongTTHC)+' · '+fmtPct(r.tyLe) : 'Tổng TTHC: '+fmtInt(r.tongTTHC)+' · chờ số liệu V03'}</div></div>
-                ${r.hasOfficial ? badgeHtml(r.dat) : '<span class="badge badge-amber">Chờ V03</span>'}
-            </div>`).join('') || '<div class="note">Chưa có dữ liệu.</div>';
-        // Biểu đồ
-        const chartMonths = withOfficial.slice(-6);
-        const ctx = document.getElementById('cum-chart');
-        if (cumChartInstance) cumChartInstance.destroy();
-        cumChartInstance = new Chart(ctx, {
-            type: 'bar',
-            data: { labels: chartMonths.map(r=>monthLabel(r.monthKey).replace('Tháng ','T')),
-                datasets: [{ data: chartMonths.map(r=>r.tyLe), backgroundColor:'#2563eb', borderRadius:4 }] },
-            options: { plugins:{legend:{display:false}}, scales:{ y:{ min:0, max:100, ticks:{callback:v=>v+'%'} } }, responsive:true, maintainAspectRatio:false }
-        });
-    });
 }
 
 function loadAccountInfo(){
