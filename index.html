@@ -108,6 +108,21 @@ table.dt { width:100%; border-collapse:collapse; font-size:12.5px; min-width:420
 table.dt th, table.dt td { padding:9px 8px; text-align:center; border-bottom:1px solid var(--border); white-space:nowrap; }
 table.dt th { color: var(--text-muted); font-weight:700; font-size:11.5px; }
 table.dt td.unit-name { text-align:left; }
+.card.pl-card { padding:8px 6px; }
+th.sortable { cursor:pointer; user-select:none; }
+.stat-box.clickable { cursor:pointer; }
+.stat-box.clickable .l i { font-size:9px; opacity:.6; margin-left:2px; }
+table.dt td.unit-link { cursor:pointer; text-decoration:underline dotted; text-underline-offset:3px; }
+.sort-ic { font-size:9px; margin-left:2px; opacity:.45; }
+.sort-active .sort-ic, th.sort-active .sort-ic { opacity:1; color:var(--primary); }
+.sort-bar { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-bottom:12px; font-size:12px; color:var(--text-muted); }
+.sort-bar button { padding:5px 9px; border-radius:16px; border:1px solid var(--border); background:var(--card-bg); color:var(--text-main); font-size:11.5px; font-weight:600; cursor:pointer; }
+.sort-bar button.sort-active { border-color:var(--primary); }
+table.dt.dt-fit { min-width:0; table-layout:fixed; font-size:11.5px; }
+table.dt.dt-fit th, table.dt.dt-fit td { padding:7px 3px; white-space:normal; word-break:break-word; }
+table.dt.dt-fit th { font-size:10.5px; }
+table.dt.dt-fit td.unit-name { line-height:1.3; }
+table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
 .bottom-nav { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:430px; background: var(--card-bg); border-top:1px solid var(--border); display:flex; z-index:60; }
 .bottom-nav .nav-btn { flex:1; border:none; background:none; padding:10px 4px 8px; text-align:center; color: var(--text-muted); font-size:10.5px; cursor:pointer; }
 .bottom-nav .nav-btn i { display:block; font-size:16px; margin-bottom:3px; }
@@ -442,15 +457,16 @@ table.dt td.unit-name { text-align:left; }
           <h2 class="page-title">Tổng quan hệ thống<span class="sub-line">Admin · <span id="admin-ov-month-label">-</span></span></h2>
           <button class="theme-btn" onclick="toggleTheme()"><i id="theme-icon2" class="fa-solid fa-moon"></i></button>
         </div>
+        <div class="form-group"><select id="admin-ov-year-select" class="form-control" onchange="onAdminYearChange('ov')"></select></div>
         <div class="form-group"><select id="admin-ov-month-select" class="form-control" onchange="renderAdminOverview()"></select></div>
         <div id="admin-ov-incomplete-banner"></div>
         <div class="stat-grid">
           <div class="stat-box"><div class="n" id="ov-tongdonvi">129</div><div class="l">Tổng đơn vị</div></div>
-          <div class="stat-box"><div class="n" id="ov-daobaocao">0/129</div><div class="l">Đã báo cáo</div></div>
+          <div class="stat-box clickable" onclick="openOvList('reported')"><div class="n" id="ov-daobaocao">0/129</div><div class="l">Đã báo cáo <i class="fa-solid fa-chevron-right"></i></div></div>
         </div>
         <div class="stat-grid">
-          <div class="stat-box green"><div class="n" id="ov-datchitieu">0</div><div class="l">Đạt chỉ tiêu</div></div>
-          <div class="stat-box red"><div class="n" id="ov-chuanop">0</div><div class="l">Chưa nộp số liệu</div></div>
+          <div class="stat-box green clickable" onclick="openOvList('dat')"><div class="n" id="ov-datchitieu">0</div><div class="l">Đạt chỉ tiêu <i class="fa-solid fa-chevron-right"></i></div></div>
+          <div class="stat-box red clickable" onclick="openOvList('missing')"><div class="n" id="ov-chuanop">0</div><div class="l">Chưa nộp số liệu <i class="fa-solid fa-chevron-right"></i></div></div>
         </div>
         <div class="card">
           <h2>Tỷ lệ toàn tỉnh theo tháng</h2>
@@ -474,27 +490,52 @@ table.dt td.unit-name { text-align:left; }
       </div>
     </div>
 
+    <!-- POPUP DANH SÁCH ĐƠN VỊ (TỔNG QUAN) -->
+    <div id="ov-list-modal" class="modal-overlay" style="display:none;" onclick="if(event.target===this) closeOvList()">
+      <div class="modal-box card" style="max-width:400px; padding:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:4px;">
+          <h2 id="ov-list-title" style="margin:0; font-size:14px; line-height:1.35;"></h2>
+          <button onclick="closeOvList()" style="background:none; border:none; color:var(--text-main); font-size:18px; cursor:pointer; padding:0 2px;"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="note" id="ov-list-sub" style="margin-bottom:8px;"></div>
+        <div class="btn-row" style="margin-bottom:8px;">
+          <button class="btn btn-outline" style="padding:9px; font-size:13px;" onclick="exportOvListExcel()"><i class="fa-solid fa-file-excel"></i> Xuất Excel</button>
+          <button class="btn btn-black" style="padding:9px; font-size:13px;" onclick="exportOvListWord()"><i class="fa-solid fa-file-word"></i> Xuất Word</button>
+        </div>
+        <div style="max-height:62vh; overflow-y:auto;">
+          <table class="dt dt-fit"><thead id="ov-list-head"></thead><tbody id="ov-list-body"></tbody></table>
+        </div>
+      </div>
+    </div>
+
     <!-- ĐỐI CHIẾU SỐ LIỆU (PHỤ LỤC 1) -->
     <div id="admin-doichieu" class="admin-sub">
       <div class="content-pad">
         <div class="page-title-row">
           <button class="back-btn" onclick="showAdminSub('tongquan')"><i class="fa-solid fa-chevron-left"></i></button>
-          <h2 class="page-title">Đối chiếu số liệu — Phụ lục 1</h2>
+          <h2 class="page-title">Đối chiếu số liệu (Phụ lục 1)</h2>
         </div>
+        <div class="form-group"><select id="dc-year-select" class="form-control" onchange="onAdminYearChange('dc')"></select></div>
         <div class="form-group"><select id="dc-month-select" class="form-control" onchange="renderReconcile()"></select></div>
         <div class="stat-grid">
-          <div class="stat-box"><div class="n" id="dc-avg">0%</div><div class="l">Chênh lệch trung bình</div></div>
-          <div class="stat-box red"><div class="n" id="dc-over">0</div><div class="l">Lệch trên 10%</div></div>
+          <div class="stat-box"><div class="n" id="dc-avg">0%</div><div class="l">Chênh lệch bình quân giữa số lượt đánh giá đơn vị báo cáo và V03 <span id="dc-avg-scope"></span></div></div>
+          <div class="stat-box red"><div class="n" id="dc-over">0</div><div class="l">Số đơn vị có chênh lệch trên 10%</div></div>
         </div>
-        <div class="notice-box"><i class="fa-solid fa-circle-info"></i> Chênh lệch có thể do thời điểm chốt số liệu, phương pháp tổng hợp hoặc cập nhật hệ thống khác nhau.</div>
-        <button class="btn btn-outline" style="margin-bottom:14px;" onclick="showAdminSub('nhapv03')"><i class="fa-solid fa-pen"></i> Nhập / cập nhật số liệu V03</button>
+        <div class="notice-box"><i class="fa-solid fa-circle-info"></i> Chênh lệch có thể do thời điểm chốt số liệu, phương pháp tổng hợp hoặc cập nhật hệ thống khác nhau.<br>Chênh lệch % của từng đơn vị = |Đơn vị báo cáo − V03| ÷ V03 × 100. Chỉ tính các đơn vị đã có đủ cả hai số liệu; chênh lệch bình quân là trung bình cộng của các tỷ lệ này.</div>
+        <div class="btn-row" style="margin-bottom:14px;">
+          <button class="btn btn-outline" onclick="exportReconcileExcel()"><i class="fa-solid fa-file-excel"></i> Xuất Excel</button>
+          <button class="btn btn-black" onclick="exportReconcileWord()"><i class="fa-solid fa-file-word"></i> Xuất Word</button>
+        </div>
+        <div class="form-group"><input type="search" id="dc-search" class="form-control" placeholder="Tìm tên đơn vị..." oninput="renderReconcileRows()"><div class="note" id="dc-search-count" style="margin-top:4px;"></div></div>
+        <div class="sort-bar" id="dc-sort-bar"><span>Sắp xếp theo:</span>
+          <button data-k="unitName" onclick="setDcSort('unitName')">Tên đơn vị <i class="fa-solid fa-sort sort-ic"></i></button>
+          <button data-k="baoCao" onclick="setDcSort('baoCao')">Đơn vị báo cáo <i class="fa-solid fa-sort sort-ic"></i></button>
+          <button data-k="v03" onclick="setDcSort('v03')">V03 <i class="fa-solid fa-sort sort-ic"></i></button>
+          <button data-k="diffPct" onclick="setDcSort('diffPct')">Chênh lệch % <i class="fa-solid fa-sort sort-ic"></i></button>
+        </div>
         <div class="card">
           <h2>Chi tiết theo đơn vị</h2>
           <div id="dc-detail-list"></div>
-        </div>
-        <div class="btn-row">
-          <button class="btn btn-outline" onclick="exportReconcileExcel()"><i class="fa-solid fa-file-excel"></i> Xuất Excel</button>
-          <button class="btn btn-black" onclick="exportReconcileWord()"><i class="fa-solid fa-file-word"></i> Xuất Word</button>
         </div>
       </div>
     </div>
@@ -508,7 +549,9 @@ table.dt td.unit-name { text-align:left; }
         </div>
         <div class="notice-box"><i class="fa-solid fa-circle-info"></i> Số liệu này lưu riêng, tách biệt với số liệu đơn vị tự báo cáo, dùng để đối chiếu và tính Phụ lục 2, 3.</div>
         <div class="card">
+          <div class="form-group"><label>Năm đánh giá</label><select id="v03-year-select" class="form-control" onchange="onAdminYearChange('v03')"></select></div>
           <div class="form-group"><label>Tháng</label><select id="v03-month-select" class="form-control" onchange="loadV03Form()"></select></div>
+          <div class="notice-box" id="v03-complete-note" style="display:none;"><i class="fa-solid fa-circle-check"></i> Đã có đầy đủ số liệu V03 cho tháng này của tất cả các đơn vị</div>
           <div class="form-group" style="position:relative;">
             <label>Đơn vị</label>
             <input type="text" id="v03-unit-input" class="form-control" placeholder="Gõ để tìm đơn vị..." autocomplete="off" oninput="filterUnitSuggestions('v03-unit-input','v03-unit-suggest')" onfocus="filterUnitSuggestions('v03-unit-input','v03-unit-suggest')">
@@ -525,15 +568,24 @@ table.dt td.unit-name { text-align:left; }
           <p class="note" id="v03-updated-note"></p>
           <button class="btn btn-black" onclick="saveOfficialV03()">Lưu số liệu chính thức</button>
         </div>
-        <div class="card">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-            <h2 style="margin:0;">Đơn vị chưa có số liệu V03</h2>
+        <div class="card" id="v03-missing-card" style="display:none;">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+            <h2 style="margin:0;">Đơn vị chưa có số liệu V03 <span id="v03-missing-count"></span></h2>
+            <label class="toggle-switch"><input type="checkbox" id="v03-missing-toggle" onchange="applyV03MissingToggle()"><span class="toggle-slider"></span></label>
           </div>
-          <div id="v03-missing-list"></div>
+          <div id="v03-missing-list" style="display:none; margin-top:10px;"></div>
         </div>
         <div class="card">
-          <h2>Export / Import danh sách V03</h2>
-          <p class="note" style="margin-bottom:10px;">Xuất file Excel danh sách 129 đơn vị để điền offline, sau đó nhập lại vào hệ thống.</p>
+          <h2>Export / Import số liệu</h2>
+          <div class="note" style="margin-bottom:10px; font-size:12.5px; line-height:1.5;">
+            Dùng khi cần nhập số liệu V03 cho nhiều đơn vị cùng lúc:
+            <ol style="margin:6px 0 6px; padding-left:18px;">
+              <li>Chọn năm đánh giá và tháng ở đầu trang, bấm <b>Export danh sách</b> để tải file Excel gồm 129 đơn vị của tháng đó (đơn vị nào đã có số liệu thì được điền sẵn).</li>
+              <li>Mở file, điền cột <b>Số lượt đánh giá chính thức V03</b> cho từng đơn vị. Cột <b>Tổng số TTHC</b> là tùy chọn. Không sửa cột Mã đơn vị và Tên đơn vị.</li>
+              <li>Kiểm tra lại tháng đang chọn ở đầu trang, chọn file vừa điền rồi bấm <b>Import vào hệ thống</b>.</li>
+            </ol>
+            Lưu ý: số liệu được nhập cho tháng đang chọn (không đọc tháng từ file); dòng để trống số lượt sẽ bị bỏ qua; đơn vị đã có số liệu sẽ bị ghi đè bằng số trong file.
+          </div>
           <div class="btn-row" style="margin-bottom:10px;">
             <button class="btn btn-outline" onclick="exportV03Template()"><i class="fa-solid fa-file-export"></i> Export danh sách</button>
           </div>
@@ -553,29 +605,49 @@ table.dt td.unit-name { text-align:left; }
       <div class="content-pad">
         <div class="page-title-row">
           <button class="back-btn" onclick="showAdminSub('tongquan')"><i class="fa-solid fa-chevron-left"></i></button>
-          <h2 class="page-title" id="pl-title">Phụ lục 2 — Kết quả chỉ tiêu tháng</h2>
+          <h2 class="page-title" id="pl-title">Phụ lục 2 (Kết quả chỉ tiêu tháng)</h2>
         </div>
         <div class="subtab-row">
           <button class="active" id="pltab-2" onclick="showPhuLucTab(2)">Phụ lục 2 - Tháng</button>
           <button id="pltab-3" onclick="showPhuLucTab(3)">Phụ lục 3 - Lũy kế</button>
         </div>
+        <div class="form-group"><select id="pl-year-select" class="form-control" onchange="onAdminYearChange('pl')"></select></div>
         <div class="form-group"><select id="pl-month-select" class="form-control" onchange="renderPhuLuc()"></select></div>
         <div class="notice-box" id="pl-source-note"><i class="fa-solid fa-circle-info"></i> Số lượt đánh giá dùng tính chỉ tiêu là số liệu chính thức V03. <a href="#" onclick="showAdminSub('nhapv03'); return false;" style="color:var(--blue-text); font-weight:700;">Cập nhật V03</a></div>
         <div class="stat-grid">
-          <div class="stat-box"><div class="n" id="pl-dat">0 / 129</div><div class="l" id="pl-dat-label">Đạt chỉ tiêu</div></div>
-          <div class="stat-box"><div class="n" id="pl-tyle">0%</div><div class="l" id="pl-tyle-label">Tỷ lệ đạt bình quân</div></div>
+          <div class="stat-box"><div class="n" id="pl-dat">0 / 129</div><div class="l" id="pl-dat-label">Số đơn vị đạt chỉ tiêu (tỷ lệ từ 60% trở lên) trên tổng số đơn vị</div></div>
+          <div class="stat-box"><div class="n" id="pl-tyle">0%</div><div class="l" id="pl-tyle-label">Tỷ lệ bình quân của các đơn vị (lượt đánh giá ÷ tổng TTHC)</div><div class="l" id="pl-tyle-scope"></div></div>
         </div>
-        <div class="card">
+        <div class="btn-row" style="margin-bottom:14px;">
+          <button class="btn btn-outline" onclick="exportPhuLucExcel()"><i class="fa-solid fa-file-excel"></i> Xuất Excel</button>
+          <button class="btn btn-black" onclick="exportPhuLucWord()"><i class="fa-solid fa-file-word"></i> Xuất Word</button>
+        </div>
+        <div class="form-group"><input type="search" id="pl-search" class="form-control" placeholder="Tìm tên đơn vị..." oninput="renderPhuLucRows()"><div class="note" id="pl-search-count" style="margin-top:4px;"></div></div>
+        <div class="card pl-card">
           <div class="data-table-wrap">
-            <table class="dt">
-              <thead><tr><th>STT</th><th>Tên đơn vị</th><th id="pl-col1">Lượt đánh giá</th><th id="pl-col2">Tổng TTHC</th><th>Tỷ lệ</th><th>Đánh giá</th></tr></thead>
+            <table class="dt dt-fit">
+              <colgroup><col style="width:9%"><col><col style="width:13%"><col style="width:13%"><col style="width:13%"><col style="width:17%"></colgroup>
+              <thead><tr><th>STT</th><th class="sortable" data-k="name" onclick="setPlSort('name')">Tên đơn vị <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="col1" onclick="setPlSort('col1')"><span id="pl-col1">Lượt đánh giá</span> <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="col2" onclick="setPlSort('col2')"><span id="pl-col2">Tổng TTHC</span> <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="tyLe" onclick="setPlSort('tyLe')">Tỷ lệ <i class="fa-solid fa-sort sort-ic"></i></th><th>Đánh giá</th></tr></thead>
               <tbody id="pl-table-body"></tbody>
             </table>
           </div>
         </div>
-        <div class="btn-row">
-          <button class="btn btn-outline" onclick="exportPhuLucExcel()"><i class="fa-solid fa-file-excel"></i> Xuất Excel</button>
-          <button class="btn btn-black" onclick="exportPhuLucWord()"><i class="fa-solid fa-file-word"></i> Xuất Word</button>
+      </div>
+    </div>
+
+    <!-- POPUP BIỂU ĐỒ ĐƠN VỊ (PHỤ LỤC) -->
+    <div id="pl-unit-modal" class="modal-overlay" style="display:none;" onclick="if(event.target===this) closePlUnitModal()">
+      <div class="modal-box card">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:4px;">
+          <h2 id="pl-unit-modal-title" style="margin:0; font-size:14px; line-height:1.35;"></h2>
+          <button onclick="closePlUnitModal()" style="background:none; border:none; color:var(--text-main); font-size:18px; cursor:pointer; padding:0 2px;"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="note" id="pl-unit-modal-sub" style="margin-bottom:8px;"></div>
+        <div style="position:relative; height:230px;"><canvas id="pl-unit-chart"></canvas></div>
+        <div class="note" style="margin-top:8px; font-size:11px;">Cột xanh: đạt (từ 60%) · Cột đỏ: chưa đạt · Cột xám: chưa đủ số liệu V03 hoặc Tổng TTHC. Tỷ lệ = lượt đánh giá V03 ÷ Tổng TTHC.</div>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button class="btn btn-outline" style="padding:9px; font-size:13px;" onclick="exportPlUnitExcel()"><i class="fa-solid fa-file-excel"></i> Xuất Excel</button>
+          <button class="btn btn-black" style="padding:9px; font-size:13px;" onclick="exportPlUnitWord()"><i class="fa-solid fa-file-word"></i> Xuất Word</button>
         </div>
       </div>
     </div>
@@ -678,6 +750,7 @@ table.dt td.unit-name { text-align:left; }
 <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-auth-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
@@ -720,7 +793,6 @@ function currentReportingMonthKey(){
     return monthKey(y,m);
 }
 function prevMonthKey(key){ let [y,m]=key.split("-").map(Number); m--; if(m<1){m=12;y--;} return monthKey(y,m); }
-function yearOf(key){ return key.split("-")[0]; }
 function triggerHaptic(){ if(navigator.vibrate) navigator.vibrate(15); }
 function toggleTheme(){
     const cur = document.documentElement.getAttribute('data-theme');
@@ -752,18 +824,6 @@ function showScreen(id){ document.querySelectorAll('.view-screen').forEach(s=>s.
 function fmtInt(n){ return (n||0).toLocaleString('vi-VN'); }
 function fmtPct(n){ return n.toFixed(1) + '%'; }
 function badgeHtml(dat){ return dat ? '<span class="badge badge-green">Đạt</span>' : '<span class="badge badge-red">Không Đạt</span>'; }
-
-function populateMonthSelect(selectEl, count, includeCurrentEvenIncomplete){
-    // liệt kê 'count' tháng gần nhất kể từ tháng hiện tại (giảm dần)
-    selectEl.innerHTML = '';
-    let key = currentMonthKey();
-    for(let i=0;i<count;i++){
-        const opt = document.createElement('option');
-        opt.value = key; opt.innerText = monthLabel(key);
-        selectEl.appendChild(opt);
-        key = prevMonthKey(key);
-    }
-}
 
 function filterUnitSuggestions(inputId, boxId){
     const input = document.getElementById(inputId);
@@ -1329,11 +1389,41 @@ function showAdminSub(name){
     if (name==='caidat') loadAdminConfig();
     if (name==='taikhoan') renderAdminAccountList();
 }
+// Năm đánh giá (tháng 10 năm trước → tháng 9) và tháng đánh giá (kỳ 15 tháng trước → 14 tháng này) cho các tab admin
+const ADMIN_PERIOD_TABS = {
+    ov:  { year:'admin-ov-year-select', month:'admin-ov-month-select', reload: ()=>renderAdminOverview() },
+    dc:  { year:'dc-year-select',       month:'dc-month-select',       reload: ()=>renderReconcile() },
+    v03: { year:'v03-year-select',      month:'v03-month-select',      reload: ()=>loadV03Form() },
+    pl:  { year:'pl-year-select',       month:'pl-month-select',       reload: ()=>renderPhuLuc() }
+};
+const ADMIN_EVAL_YEARS_BACK = 2;
+function adminEvalYearLabel(y){
+    const yy = n => String(n).slice(-2);
+    return `Năm đánh giá ${y} (15/9/${yy(y-1)}–14/9/${yy(y)})`;
+}
+function populateAdminMonths(name, evalYear){
+    const { startKey, endKey } = fiscalYearRange(monthKey(evalYear, 9));
+    const curKey = currentReportingMonthKey();
+    let k = endKey < curKey ? endKey : curKey;
+    const opts = [];
+    while (k >= startKey){ opts.push(`<option value="${k}">${monthLabel(k)} (${reportingPeriodShort(k)})</option>`); k = prevMonthKey(k); }
+    document.getElementById(ADMIN_PERIOD_TABS[name].month).innerHTML = opts.join('');
+}
+function setupAdminPeriod(name){
+    const curYear = fiscalYearRange(currentReportingMonthKey()).evalYear;
+    const yearSel = document.getElementById(ADMIN_PERIOD_TABS[name].year);
+    let html = '';
+    for (let i=0; i<=ADMIN_EVAL_YEARS_BACK; i++) html += `<option value="${curYear-i}">${adminEvalYearLabel(curYear-i)}</option>`;
+    yearSel.innerHTML = html;
+    yearSel.value = curYear;
+    populateAdminMonths(name, curYear);
+}
+function onAdminYearChange(name){
+    populateAdminMonths(name, Number(document.getElementById(ADMIN_PERIOD_TABS[name].year).value));
+    ADMIN_PERIOD_TABS[name].reload();
+}
 function initAdminApp(){
-    populateMonthSelect(document.getElementById('admin-ov-month-select'), 12);
-    populateMonthSelect(document.getElementById('dc-month-select'), 12);
-    populateMonthSelect(document.getElementById('v03-month-select'), 12);
-    populateMonthSelect(document.getElementById('pl-month-select'), 12);
+    Object.keys(ADMIN_PERIOD_TABS).forEach(setupAdminPeriod);
     showAdminSub('tongquan');
 }
 
@@ -1348,12 +1438,12 @@ function getOfficialForMonth(mKey){
     });
 }
 function getReportsCumulative(mKey){
-    const year = yearOf(mKey);
+    const { startKey } = fiscalYearRange(mKey);
     return db.collection('reports').get().then(snap=>{
         const map = {};
         snap.forEach(d=>{
             const r = d.data();
-            if (r.monthKey && r.monthKey.startsWith(year) && r.monthKey<=mKey){
+            if (r.monthKey && r.monthKey>=startKey && r.monthKey<=mKey){
                 if(!map[r.unitId]) map[r.unitId]={ soLuot:0, tongTTHC:0 };
                 map[r.unitId].soLuot += r.soLuot; map[r.unitId].tongTTHC += r.tongTTHC;
             }
@@ -1362,12 +1452,12 @@ function getReportsCumulative(mKey){
     });
 }
 function getOfficialCumulative(mKey){
-    const year = yearOf(mKey);
+    const { startKey } = fiscalYearRange(mKey);
     return db.collection('official').get().then(snap=>{
         const map = {};
         snap.forEach(d=>{
             const r = d.data();
-            if (r.monthKey && r.monthKey.startsWith(year) && r.monthKey<=mKey){
+            if (r.monthKey && r.monthKey>=startKey && r.monthKey<=mKey){
                 map[r.unitId] = (map[r.unitId]||0) + r.soLuotChinhThuc;
             }
         });
@@ -1385,7 +1475,9 @@ function renderAdminOverview(){
         const reportByUnit = {}; reportRows.forEach(r=>reportByUnit[r.unitId]=r);
         const officialByUnit = {}; officialRows.forEach(r=>officialByUnit[r.unitId]=r.soLuotChinhThuc);
         const total = unitCatalog.length;
-        const reportedCount = reportRows.length;
+        lastOvMonthKey = mKey;
+        lastOvRows = unitCatalog.map(u=>({ unit:u, r:reportByUnit[u.id], off:officialByUnit[u.id] }));
+        const reportedCount = lastOvRows.filter(x=>isReportDone(x.r)).length;
         const officialCount = officialRows.length;
         const complete = reportedCount>=total && officialCount>=total;
 
@@ -1418,10 +1510,147 @@ function renderAdminOverview(){
         renderOverviewYearChart(mKey);
     });
 }
+// Popup danh sách đơn vị từ các ô thống kê Tổng quan
+let lastOvRows = [];
+let lastOvMonthKey = '';
+function isReportDone(r){ return !!r && typeof r.soLuot === 'number' && typeof r.tongTTHC === 'number'; }
+const OV_LIST_KINDS = {
+    reported: { title:'Đã báo cáo',       file:'DaBaoCao',    sheet:'Da bao cao' },
+    dat:      { title:'Đạt chỉ tiêu',     file:'DatChiTieu',  sheet:'Dat chi tieu' },
+    missing:  { title:'Chưa nộp số liệu', file:'ChuaNopSoLieu', sheet:'Chua nop so lieu' }
+};
+let ovListCur = null;
+function ovCellText(c, v){
+    if (c.t === 'int') return typeof v === 'number' ? v : '';
+    if (c.t === 'pct') return typeof v === 'number' ? fmtPct(v) : '';
+    return v;
+}
+function ovCellHtml(c, v){
+    if (c.t === 'int') return typeof v === 'number' ? fmtInt(v) : '';
+    if (c.t === 'kq') return badgeHtml(v === 'Đạt');
+    return ovCellText(c, v);
+}
+function openOvList(kind){
+    const rows = lastOvRows;
+    if (!rows.length) return;
+    const mLabel = monthLabel(lastOvMonthKey);
+    let cols, data, sub;
+    if (kind === 'reported'){
+        const list = rows.filter(x=>isReportDone(x.r));
+        sub = `${mLabel} · ${list.length}/${rows.length} đơn vị đã nhập đủ số lượt đánh giá và Tổng TTHC (số liệu đơn vị tự báo cáo)`;
+        cols = [{l:'Đơn vị',t:'text'}, {l:'Lượt đánh giá',t:'int',w:17}, {l:'Tổng TTHC',t:'int',w:17}, {l:'Tỷ lệ',t:'pct',w:16}];
+        data = list.map(x=>[x.unit.name, x.r.soLuot, x.r.tongTTHC, x.r.tongTTHC>0 ? x.r.soLuot/x.r.tongTTHC*100 : 0]);
+    } else if (kind === 'dat'){
+        const list = rows.filter(x=>x.r && typeof x.off !== 'undefined').map(x=>({ x, tyLe: x.r.tongTTHC>0 ? x.off/x.r.tongTTHC*100 : 0 }));
+        const soDat = list.filter(i=>i.tyLe>=60).length;
+        sub = `${mLabel} · ${soDat}/${list.length} đơn vị đạt (tỷ lệ từ 60% trở lên) trong số đơn vị đã có số liệu V03. Lượt đánh giá là số liệu V03 công bố, Tổng TTHC do đơn vị tự báo cáo.`;
+        cols = [{l:'Đơn vị',t:'text'}, {l:'Lượt V03',t:'int',w:15}, {l:'Tổng TTHC',t:'int',w:15}, {l:'Tỷ lệ',t:'pct',w:15}, {l:'Kết quả',t:'kq',w:19}];
+        data = list.map(i=>[i.x.unit.name, i.x.off, i.x.r.tongTTHC, i.tyLe, i.tyLe>=60 ? 'Đạt' : 'Không Đạt']);
+    } else {
+        const list = rows.filter(x=>!isReportDone(x.r));
+        sub = `${mLabel} · ${list.length}/${rows.length} đơn vị chưa nhập đủ số lượt đánh giá và Tổng TTHC (thiếu một trong hai là chưa hoàn thành). Ô trống là chưa nhập.`;
+        cols = [{l:'Đơn vị',t:'text'}, {l:'Lượt đánh giá',t:'int',w:22}, {l:'Tổng TTHC',t:'int',w:22}];
+        data = list.map(x=>[x.unit.name, x.r && x.r.soLuot, x.r && x.r.tongTTHC]);
+    }
+    ovListCur = { kind, cols, data, sub };
+    document.getElementById('ov-list-title').innerText = OV_LIST_KINDS[kind].title;
+    document.getElementById('ov-list-sub').innerText = sub;
+    document.getElementById('ov-list-head').innerHTML = '<tr>' + cols.map(c=>`<th${c.w ? ` style="width:${c.w}%"` : ''}>${c.l}</th>`).join('') + '</tr>';
+    document.getElementById('ov-list-body').innerHTML = data.length
+        ? data.map(row=>'<tr>' + row.map((v,i)=>`<td${i===0 ? ' class="unit-name"' : ''}>${ovCellHtml(cols[i], v)}</td>`).join('') + '</tr>').join('')
+        : `<tr><td colspan="${cols.length}" style="color:var(--text-muted); font-style:italic;">Không có đơn vị nào</td></tr>`;
+    document.getElementById('ov-list-modal').style.display = '';
+}
+// --------- ĐỊNH DẠNG FILE XUẤT (dùng chung) ---------
+// headers: mảng tiêu đề cột; rows: mảng các dòng; leftCols: chỉ số cột căn trái (cột chữ); title/sub: tùy chọn
+async function downloadStyledExcel({ sheet, filename, title, sub, headers, rows, leftCols=[0], boldLast=false }){
+    const nCol = headers.length;
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet(sheet);
+    const widths = headers.map((h,i)=>{
+        if (h === 'STT') return 7;
+        const maxLen = Math.max(...rows.map(r=>String(r[i] == null ? '' : r[i]).length), 0);
+        return leftCols.includes(i) ? Math.min(60, Math.max(12, maxLen + 4)) : Math.min(26, Math.max(12, h.length + 4));
+    });
+    ws.columns = widths.map(w=>({ width:w }));
+    const totalW = widths.reduce((t,x)=>t+x, 0);
+    const border = { top:{style:'thin'}, left:{style:'thin'}, bottom:{style:'thin'}, right:{style:'thin'} };
+    const font = (o)=>Object.assign({ name:'Times New Roman', size:12 }, o);
+    let r = 1;
+    if (title){
+        ws.mergeCells(r,1,r,nCol);
+        ws.getCell(r,1).value = title;
+        ws.getCell(r,1).font = font({ size:14, bold:true });
+        ws.getCell(r,1).alignment = { horizontal:'center', vertical:'middle' };
+        ws.getRow(r).height = 26; r++;
+    }
+    if (sub){
+        ws.mergeCells(r,1,r,nCol);
+        ws.getCell(r,1).value = sub;
+        ws.getCell(r,1).font = font({ italic:true });
+        ws.getCell(r,1).alignment = { horizontal:'left', vertical:'middle', wrapText:true };
+        ws.getRow(r).height = 18 * Math.max(1, Math.ceil(sub.length / (totalW * 0.95))); r++;
+    }
+    const headRow = r;
+    headers.forEach((t,i)=>{
+        const cell = ws.getRow(headRow).getCell(i+1);
+        cell.value = t;
+        cell.font = font({ bold:true, color:{argb:'FFFFFFFF'} });
+        cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FF1F4E79'} };
+        cell.alignment = { horizontal:'center', vertical:'middle', wrapText:true };
+        cell.border = border;
+    });
+    ws.getRow(headRow).height = 32;
+    rows.forEach((row,ri)=>{
+        const wr = ws.getRow(headRow + 1 + ri);
+        row.forEach((v,k)=>{
+            const cell = wr.getCell(k+1);
+            cell.value = (v === '' || v === undefined) ? null : v;
+            const isLast = boldLast && ri === rows.length - 1;
+            cell.font = font(isLast ? { bold:true } : {});
+            if (isLast) cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFDDEBF7'} };
+            cell.border = border;
+            cell.alignment = { horizontal: leftCols.includes(k) ? 'left' : 'center', vertical:'middle' };
+            if (typeof v === 'number' && !leftCols.includes(k) && headers[k] !== 'STT') cell.numFmt = '#,##0';
+        });
+    });
+    ws.views = [{ state:'frozen', ySplit:headRow }];
+    ws.pageSetup = { paperSize:9, orientation:'portrait', fitToPage:true, fitToWidth:1, fitToHeight:0, printTitlesRow:`${headRow}:${headRow}` };
+    const buf = await wb.xlsx.writeBuffer();
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(new Blob([buf], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+    link.download = filename;
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+}
+function styledWordBody({ sub, headers, rows, leftCols=[0], boldLast=false }){
+    const others = headers.filter((h,i)=>!leftCols.includes(i));
+    const fixedW = others.map(h=>h === 'STT' ? 10 : 15);
+    const leftW = (100 - fixedW.reduce((t,x)=>t+x, 0)) / leftCols.length;
+    let oi = 0;
+    const widths = headers.map((h,i)=> leftCols.includes(i) ? leftW : fixedW[oi++]);
+    const head = '<tr>' + headers.map((h,i)=>`<th width="${widths[i]}%" style="width:${widths[i]}%; border:1px solid #000; padding:5px 4px; background:#1F4E79; color:#fff; text-align:center;${h === 'STT' ? ' white-space:nowrap;' : ''}">${h}</th>`).join('') + '</tr>';
+    const body = rows.map((row,ri)=>'<tr>' + row.map((v,k)=>`<td style="border:1px solid #000; padding:3px 4px;${boldLast && ri === rows.length-1 ? ' font-weight:bold; background:#DDEBF7;' : ''} text-align:${leftCols.includes(k) ? 'left' : 'center'};">${v == null ? '' : (typeof v === 'number' && headers[k] !== 'STT' ? fmtInt(v) : v)}</td>`).join('') + '</tr>').join('');
+    return `<style>@page{size:A4; margin:2cm 1.5cm;} body{font-family:'Times New Roman',serif; font-size:13pt;} h3{text-align:center; font-size:15pt; margin:0 0 8pt;} p.sub{margin:0 0 10pt; font-style:italic;} td p{margin:0;} table{width:100%; border-collapse:collapse; font-size:12pt;} tr{page-break-inside:avoid;} th{font-weight:bold;}</style>${sub ? `<p class="sub">${sub}</p>` : ''}<table width="100%"><colgroup>${widths.map(w=>`<col width="${w}%" style="width:${w}%">`).join('')}</colgroup>${head}${body}</table>`;
+}
+function ovExportRows(c){ return c.data.map((row,i)=>[i+1, ...row.map((v,j)=>ovCellText(c.cols[j], v))]); }
+function exportOvListExcel(){
+    const c = ovListCur; if (!c) return;
+    const meta = OV_LIST_KINDS[c.kind];
+    return downloadStyledExcel({ sheet:meta.sheet, filename:`TongQuan_${meta.file}_${lastOvMonthKey}.xlsx`,
+        title:`${meta.title} - ${monthLabel(lastOvMonthKey)}`, sub:c.sub,
+        headers:['STT', ...c.cols.map(x=>x.l)], rows:ovExportRows(c), leftCols:[1] });
+}
+function exportOvListWord(){
+    const c = ovListCur; if (!c) return;
+    const meta = OV_LIST_KINDS[c.kind];
+    exportHtmlAsWord(`${meta.title} - ${monthLabel(lastOvMonthKey)}`,
+        styledWordBody({ sub:c.sub, headers:['STT', ...c.cols.map(x=>x.l)], rows:ovExportRows(c), leftCols:[1] }),
+        `TongQuan_${meta.file}_${lastOvMonthKey}.doc`);
+}
+function closeOvList(){ document.getElementById('ov-list-modal').style.display = 'none'; }
 function renderOverviewYearChart(mKey){
-    const year = yearOf(mKey);
     const months = [];
-    for(let m=1;m<=12;m++){ const k = monthKey(year,m); if (k<=mKey) months.push(k); }
+    for (let k = fiscalYearRange(mKey).startKey; k <= mKey; k = nextMonthKey(k)) months.push(k);
     Promise.all(months.map(k => Promise.all([getReportsForMonth(k), getOfficialForMonth(k)]))).then(results=>{
         const dataPoints = results.map(([reportRows, officialRows])=>{
             const reportByUnit = {}; reportRows.forEach(r=>reportByUnit[r.unitId]=r);
@@ -1459,9 +1688,17 @@ function renderReconcile(){
         const avg = rows.length ? rows.reduce((s,r)=>s+r.diffPct,0)/rows.length : 0;
         const over = rows.filter(r=>r.diffPct>10).length;
         document.getElementById('dc-avg').innerText = fmtPct(avg);
-        document.getElementById('dc-over').innerText = over;
-        const list = document.getElementById('dc-detail-list');
-        list.innerHTML = rows.map(r=>`
+        document.getElementById('dc-over').innerText = over + ' / ' + rows.length;
+        document.getElementById('dc-avg-scope').innerText = `(bình quân trên ${rows.length}/${unitCatalog.length} đơn vị đã có đủ số liệu)`;
+        renderReconcileRows();
+    });
+}
+function renderReconcileRows(){
+    const q = normVi(document.getElementById('dc-search').value.trim());
+    const shown = sortList(lastReconcileData.filter(r=>!q || normVi(r.unitName).includes(q)), dcSort, (r,k)=>r[k]);
+    setSortIcons(document.querySelectorAll('#dc-sort-bar button'), dcSort);
+    document.getElementById('dc-search-count').innerText = q ? `Hiển thị ${shown.length} / ${lastReconcileData.length} đơn vị` : '';
+    document.getElementById('dc-detail-list').innerHTML = shown.map(r=>`
             <div class="diff-card ${r.diffPct>10?'over':''}">
                 <div style="font-weight:700; font-size:13.5px; margin-bottom:6px;">${r.unitName}</div>
                 <div style="display:flex; justify-content:space-between; font-size:12.5px; color:var(--text-muted);">
@@ -1469,23 +1706,21 @@ function renderReconcile(){
                     <span>V03: <b style="color:var(--text-main);">${fmtInt(r.v03)}</b></span>
                 </div>
                 <div style="margin-top:6px;"><span class="badge ${r.diffPct>10?'badge-red':'badge-green'}">Chênh lệch: ${r.diff>=0?'+':''}${fmtInt(r.diff)} (${fmtPct(r.diffPct)})</span></div>
-            </div>`).join('') || '<div class="note">Chưa có đủ dữ liệu để đối chiếu (cần cả số đơn vị báo cáo và số V03).</div>';
-    });
+            </div>`).join('')
+        || (lastReconcileData.length ? '<div class="note">Không tìm thấy đơn vị phù hợp.</div>' : '<div class="note">Chưa có đủ dữ liệu để đối chiếu (cần cả số đơn vị báo cáo và số V03).</div>');
 }
+const RECONCILE_HEADERS = ["Đơn vị","Đơn vị báo cáo","V03","Chênh lệch","Chênh lệch %"];
+function reconcileExportRows(){ return lastReconcileData.map(r=>[r.unitName, r.baoCao, r.v03, r.diff, fmtPct(r.diffPct)]); }
 function exportReconcileExcel(){
     const mKey = document.getElementById('dc-month-select').value;
-    const data = [["Đơn vị","Đơn vị báo cáo","V03","Chênh lệch","Chênh lệch %"]];
-    lastReconcileData.forEach(r=> data.push([r.unitName, r.baoCao, r.v03, r.diff, fmtPct(r.diffPct)]));
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), "Phu luc 1");
-    XLSX.writeFile(wb, `PhuLuc1_DoiChieu_${mKey}.xlsx`);
+    return downloadStyledExcel({ sheet:"Phu luc 1", filename:`PhuLuc1_DoiChieu_${mKey}.xlsx`,
+        title:`Phụ lục 1 - Đối chiếu số liệu ${monthLabel(mKey)}`,
+        headers:RECONCILE_HEADERS, rows:reconcileExportRows(), leftCols:[0] });
 }
 function exportReconcileWord(){
     const mKey = document.getElementById('dc-month-select').value;
-    let rowsHtml = lastReconcileData.map(r=>`<tr><td>${r.unitName}</td><td align="center">${r.baoCao}</td><td align="center">${r.v03}</td><td align="center">${r.diff}</td><td align="center">${fmtPct(r.diffPct)}</td></tr>`).join('');
     exportHtmlAsWord(`Phụ lục 1 - Đối chiếu số liệu ${monthLabel(mKey)}`,
-        `<table border="1" cellspacing="0" cellpadding="4" style="border-collapse:collapse; font-size:12px;">
-        <tr><th>Đơn vị</th><th>Đơn vị báo cáo</th><th>V03</th><th>Chênh lệch</th><th>Chênh lệch %</th></tr>${rowsHtml}</table>`,
+        styledWordBody({ headers:RECONCILE_HEADERS, rows:reconcileExportRows(), leftCols:[0] }),
         `PhuLuc1_DoiChieu_${mKey}.doc`);
 }
 function exportHtmlAsWord(title, bodyHtml, filename){
@@ -1508,11 +1743,17 @@ function renderV03MissingList(){
     getOfficialForMonth(mKey).then(officialRows=>{
         const haveSet = new Set(officialRows.map(r=>r.unitId));
         const missing = unitCatalog.filter(u=>!haveSet.has(u.id));
-        const list = document.getElementById('v03-missing-list');
-        list.innerHTML = missing.length ? missing.map(u=>`
+        document.getElementById('v03-complete-note').style.display = missing.length ? 'none' : '';
+        document.getElementById('v03-missing-card').style.display = missing.length ? '' : 'none';
+        document.getElementById('v03-missing-list').innerHTML = missing.map(u=>`
             <div class="list-row"><span class="title" style="font-weight:500;">${u.name}</span><span class="badge badge-amber">Chưa có</span></div>
-        `).join('') : '<div class="note">Đã có đầy đủ số liệu V03 cho tháng này.</div>';
+        `).join('');
+        document.getElementById('v03-missing-count').innerText = '(' + missing.length + ')';
+        applyV03MissingToggle();
     });
+}
+function applyV03MissingToggle(){
+    document.getElementById('v03-missing-list').style.display = document.getElementById('v03-missing-toggle').checked ? '' : 'none';
 }
 function saveOfficialV03(){
     triggerHaptic();
@@ -1573,9 +1814,9 @@ function exportV03Template(){
             typeof officialByUnit[u.id] !== 'undefined' ? officialByUnit[u.id] : "",
             typeof tthcByUnit[u.id] !== 'undefined' ? tthcByUnit[u.id] : ""
         ]));
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), "V03_" + mKey);
-        XLSX.writeFile(wb, `Mau_NhapV03_${mKey}.xlsx`);
+        // Giữ nguyên: dòng 1 là tiêu đề, thứ tự 4 cột (hàm import đọc theo vị trí này)
+        downloadStyledExcel({ sheet:"V03_" + mKey, filename:`Mau_NhapV03_${mKey}.xlsx`,
+            headers:data[0], rows:data.slice(1), leftCols:[0,1] });
     }).catch(err=>{ showLoading(false); customAlert('Lỗi: '+err.message, 'error'); });
 }
 let v03ImportFile = null;
@@ -1637,12 +1878,12 @@ function showPhuLucTab(n){
     currentPlTab = n;
     document.getElementById('pltab-2').classList.toggle('active', n===2);
     document.getElementById('pltab-3').classList.toggle('active', n===3);
-    document.getElementById('pl-title').innerText = n===2 ? 'Phụ lục 2 — Kết quả chỉ tiêu tháng' : 'Phụ lục 3 — Lũy kế chỉ tiêu';
+    document.getElementById('pl-title').innerText = n===2 ? 'Phụ lục 2 (Kết quả chỉ tiêu tháng)' : 'Phụ lục 3 (Lũy kế chỉ tiêu)';
     document.getElementById('pl-source-note').innerHTML = n===2
         ? '<i class="fa-solid fa-circle-info"></i> Số lượt đánh giá dùng tính chỉ tiêu là số liệu chính thức V03. <a href="#" onclick="showAdminSub(\'nhapv03\'); return false;" style="color:var(--blue-text); font-weight:700;">Cập nhật V03</a>'
-        : '<i class="fa-solid fa-circle-info"></i> Số liệu lũy kế được hệ thống tự động cộng dồn từ các tháng đã nhập, không nhập thủ công.';
-    document.getElementById('pl-dat-label').innerText = n===2 ? 'Đạt chỉ tiêu' : 'Đạt lũy kế';
-    document.getElementById('pl-tyle-label').innerText = n===2 ? 'Tỷ lệ đạt bình quân' : 'Tỷ lệ lũy kế bình quân';
+        : '<i class="fa-solid fa-circle-info"></i> Số liệu lũy kế được hệ thống tự động cộng dồn từ đầu năm đánh giá (tháng 10) đến tháng đang chọn, không nhập thủ công.';
+    document.getElementById('pl-dat-label').innerText = n===2 ? 'Số đơn vị đạt chỉ tiêu (tỷ lệ từ 60% trở lên) trên tổng số đơn vị' : 'Số đơn vị đạt lũy kế (tỷ lệ từ 60% trở lên) trên tổng số đơn vị';
+    document.getElementById('pl-tyle-label').innerText = n===2 ? 'Tỷ lệ bình quân của các đơn vị (lượt đánh giá ÷ tổng TTHC)' : 'Tỷ lệ lũy kế bình quân của các đơn vị (lũy kế lượt ÷ lũy kế TTHC)';
     document.getElementById('pl-col1').innerText = n===2 ? 'Lượt đánh giá' : 'Lũy kế lượt';
     document.getElementById('pl-col2').innerText = n===2 ? 'Tổng TTHC' : 'Lũy kế TTHC';
     renderPhuLuc();
@@ -1678,32 +1919,179 @@ function renderPhuLuc(){
         const avgTyLe = withTyLe.length ? withTyLe.reduce((s,r)=>s+r.tyLe,0)/withTyLe.length : 0;
         document.getElementById('pl-dat').innerText = soDat + ' / ' + unitCatalog.length;
         document.getElementById('pl-tyle').innerText = withTyLe.length ? fmtPct(avgTyLe) : '0%';
-        document.getElementById('pl-table-body').innerHTML = rows.map((r,idx)=>{
+        document.getElementById('pl-tyle-scope').innerText = `(bình quân trên ${withTyLe.length}/${unitCatalog.length} đơn vị đã có đủ số liệu)`;
+        renderPhuLucRows();
+    });
+}
+// Sắp xếp: bấm lần 1 (số: cao→thấp, chữ: A→Z), lần 2 đảo chiều, lần 3 về thứ tự gốc
+function nextSort(cur, key, isText){
+    if (cur.key !== key) return { key, dir: isText ? 'asc' : 'desc' };
+    if (cur.dir === (isText ? 'asc' : 'desc')) return { key, dir: isText ? 'desc' : 'asc' };
+    return { key: null, dir: 'desc' };
+}
+function sortList(items, sort, val){
+    if (!sort.key) return items;
+    const m = sort.dir === 'asc' ? 1 : -1;
+    return items.slice().sort((a,b)=>{
+        const x = val(a, sort.key), y = val(b, sort.key);
+        const ux = typeof x === 'undefined', uy = typeof y === 'undefined';
+        if (ux || uy) return ux && uy ? 0 : (ux ? 1 : -1);
+        return typeof x === 'string' ? m * x.localeCompare(y, 'vi') : m * (x - y);
+    });
+}
+function setSortIcons(elements, sort){
+    elements.forEach(el=>{
+        const on = el.dataset.k === sort.key;
+        el.classList.toggle('sort-active', on);
+        el.querySelector('.sort-ic').className = 'sort-ic fa-solid ' + (on ? (sort.dir === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort');
+    });
+}
+let plSort = { key: null, dir: 'desc' };
+function setPlSort(k){ plSort = nextSort(plSort, k, k === 'name'); renderPhuLucRows(); }
+let dcSort = { key: null, dir: 'desc' };
+function setDcSort(k){ dcSort = nextSort(dcSort, k, k === 'unitName'); renderReconcileRows(); }
+function normVi(t){ return (t||'').toLowerCase().replace(/đ/g,'d').normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+function renderPhuLucRows(){
+    const q = normVi(document.getElementById('pl-search').value.trim());
+    const shown = [];
+    lastPlData.forEach((r,idx)=>{ if (!q || normVi(r.unit.name).includes(q)) shown.push({r, idx}); });
+    const sorted = sortList(shown, plSort, (o,k)=> k==='name' ? o.r.unit.name : o.r[k]);
+    setSortIcons(document.querySelectorAll('#admin-phuluc th.sortable'), plSort);
+    document.getElementById('pl-search-count').innerText = q ? `Hiển thị ${shown.length} / ${lastPlData.length} đơn vị` : '';
+    document.getElementById('pl-table-body').innerHTML = sorted.length ? sorted.map(({r,idx})=>{
             const col1Cell = typeof r.col1 !== 'undefined' ? fmtInt(r.col1) : '<span style="color:var(--text-muted); font-style:italic;">Chưa có</span>';
             const col2Cell = typeof r.col2 !== 'undefined' ? fmtInt(r.col2) : '<span style="color:var(--text-muted); font-style:italic;">Chưa có</span>';
             const tyLeCell = typeof r.tyLe !== 'undefined' ? fmtPct(r.tyLe) : '<span style="color:var(--text-muted); font-style:italic;">Chưa đủ dữ liệu</span>';
             const ketQuaCell = typeof r.tyLe !== 'undefined' ? badgeHtml(r.tyLe>=60) : '-';
-            return `<tr><td>${idx+1}</td><td class="unit-name">${r.unit.name}</td><td>${col1Cell}</td><td>${col2Cell}</td><td>${tyLeCell}</td><td>${ketQuaCell}</td></tr>`;
-        }).join('');
-    });
+            return `<tr><td>${idx+1}</td><td class="unit-name unit-link" onclick="openPlUnit(${idx})">${r.unit.name}</td><td>${col1Cell}</td><td>${col2Cell}</td><td>${tyLeCell}</td><td>${ketQuaCell}</td></tr>`;
+        }).join('') : '<tr><td colspan="6" style="color:var(--text-muted); font-style:italic;">Không tìm thấy đơn vị phù hợp</td></tr>';
 }
+// Popup biểu đồ kết quả theo tháng của một đơn vị (niên độ: tháng 10 năm trước đến tháng 9)
+function buildUnitMonthly(evalYear, reportRows, officialRows){
+    const { startKey, endKey } = fiscalYearRange(monthKey(evalYear, 9));
+    const rep = {}; reportRows.forEach(r=>{ rep[r.monthKey] = r; });
+    const off = {}; officialRows.forEach(o=>{ off[o.monthKey] = o.soLuotChinhThuc; });
+    const out = [];
+    let k = startKey, guard = 0;
+    while (k <= endKey && guard < 12){
+        const r = rep[k], o = off[k];
+        const ok = r && typeof o !== 'undefined';
+        out.push({ key:k, off:o, tthc: r ? r.tongTTHC : undefined, tyLe: ok ? (r.tongTTHC>0 ? o/r.tongTTHC*100 : 0) : undefined });
+        k = nextMonthKey(k); guard++;
+    }
+    return out;
+}
+let plUnitChart = null;
+let plUnitCur = null;
+function openPlUnit(idx){
+    const row = lastPlData[idx]; if (!row) return;
+    const mKey = document.getElementById('pl-month-select').value || currentMonthKey();
+    const evalYear = fiscalYearRange(mKey).evalYear;
+    showLoading(true);
+    Promise.all([
+        db.collection('reports').where('unitId','==',row.unit.id).get(),
+        db.collection('official').where('unitId','==',row.unit.id).get()
+    ]).then(([repSnap, offSnap])=>{
+        showLoading(false);
+        const reportRows = []; repSnap.forEach(d=>reportRows.push(d.data()));
+        const officialRows = []; offSnap.forEach(d=>officialRows.push(d.data()));
+        const months = buildUnitMonthly(evalYear, reportRows, officialRows);
+        plUnitCur = { name: row.unit.name, evalYear, months };
+        document.getElementById('pl-unit-modal-title').innerText = row.unit.name;
+        document.getElementById('pl-unit-modal-sub').innerText = 'Tỷ lệ đạt theo tháng · ' + evalYearLabel(evalYear);
+        document.getElementById('pl-unit-modal').style.display = '';
+        if (typeof Chart === 'undefined') return;
+        const has = months.map(m=>typeof m.tyLe !== 'undefined');
+        const values = months.map((m,i)=> has[i] ? m.tyLe : 0);
+        const colors = months.map((m,i)=> !has[i] ? 'rgba(148,163,184,0.35)' : (m.tyLe>=60 ? '#22c55e' : '#f87171'));
+        const yMax = Math.max(100, Math.ceil(Math.max(...values)/20)*20);
+        if (plUnitChart) { plUnitChart.destroy(); plUnitChart = null; }
+        plUnitChart = new Chart(document.getElementById('pl-unit-chart'), {
+            type: 'bar',
+            data: {
+                labels: months.map(m=>monthLabel(m.key).replace('Tháng ','T')),
+                datasets: [
+                    { data: values, backgroundColor: colors, borderRadius: 5, maxBarThickness: 26 },
+                    { type:'line', data: months.map(()=>60), borderColor:'#facc15', borderDash:[5,4], borderWidth:1.5, pointRadius:0, datalabels:{ display:false } }
+                ]
+            },
+            options: {
+                layout: { padding: { top: 18 } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: (item)=> {
+                        if (item.datasetIndex === 1) return 'Chỉ tiêu 60%';
+                        const m = months[item.dataIndex];
+                        return has[item.dataIndex] ? `${fmtPct(m.tyLe)} (${fmtInt(m.off)} lượt / ${fmtInt(m.tthc)} TTHC)` : 'Chưa đủ số liệu';
+                    } } },
+                    datalabels: { display: (ctx)=> ctx.datasetIndex === 0, anchor:'end', align:'end', offset:1,
+                        color: (ctx)=> has[ctx.dataIndex] ? '#e6f1ff' : '#94a3b8', font:{ weight:'700', size:8.5 },
+                        formatter: (v, ctx)=> has[ctx.dataIndex] ? v.toFixed(1)+'%' : '–' }
+                },
+                scales: {
+                    y: { min:0, max:yMax, ticks:{ callback:v=>v+'%', font:{size:10} }, grid:{ color:'rgba(148,163,184,0.15)' } },
+                    x: { ticks:{ font:{size:10} }, grid:{ display:false } }
+                },
+                responsive: true, maintainAspectRatio: false
+            }
+        });
+    }).catch(err=>{ showLoading(false); customAlert('Lỗi: ' + err.message, 'error'); });
+}
+// Xuất kết quả cả năm đánh giá của đơn vị đang xem trong popup (tháng chưa có số liệu để trống)
+const PL_UNIT_HEADERS = ["Tháng","Số lượt đánh giá chính thức (V03)","Tổng số TTHC","Tỷ lệ %","Đánh giá"];
+function plUnitExportRows(){
+    const rows = plUnitCur.months.map(m=>[
+        monthLabel(m.key),
+        typeof m.off !== 'undefined' ? m.off : '',
+        typeof m.tthc !== 'undefined' ? m.tthc : '',
+        typeof m.tyLe !== 'undefined' ? fmtPct(m.tyLe) : '',
+        typeof m.tyLe !== 'undefined' ? (m.tyLe>=60 ? 'Đạt' : 'Không Đạt') : ''
+    ]);
+    // Dòng lũy kế: cộng các tháng đã có đủ cả số lượt V03 và Tổng TTHC
+    const done = plUnitCur.months.filter(m=>typeof m.tyLe !== 'undefined');
+    if (done.length){
+        const sumOff = done.reduce((t,m)=>t+m.off, 0), sumTthc = done.reduce((t,m)=>t+m.tthc, 0);
+        const tyLe = sumTthc>0 ? sumOff/sumTthc*100 : 0;
+        rows.push(['Lũy kế đến ' + monthLabel(done[done.length-1].key).replace('Tháng','tháng'), sumOff, sumTthc, fmtPct(tyLe), tyLe>=60 ? 'Đạt' : 'Không Đạt']);
+    } else {
+        rows.push(['Lũy kế', '', '', '', '']);
+    }
+    return rows;
+}
+function plUnitFileBase(){
+    return `KetQuaNam${plUnitCur.evalYear}_` + plUnitCur.name.replace(/[\\\/:*?"<>|,]/g,'').trim().replace(/\s+/g,'_');
+}
+function exportPlUnitExcel(){
+    if (!plUnitCur) return;
+    return downloadStyledExcel({ sheet:'Nam danh gia ' + plUnitCur.evalYear, filename:plUnitFileBase() + '.xlsx',
+        title:plUnitCur.name, sub:'Kết quả ' + evalYearLabel(plUnitCur.evalYear),
+        headers:PL_UNIT_HEADERS, rows:plUnitExportRows(), leftCols:[0], boldLast:true });
+}
+function exportPlUnitWord(){
+    if (!plUnitCur) return;
+    exportHtmlAsWord(plUnitCur.name,
+        styledWordBody({ sub:'Kết quả ' + evalYearLabel(plUnitCur.evalYear), headers:PL_UNIT_HEADERS, rows:plUnitExportRows(), leftCols:[0], boldLast:true }),
+        plUnitFileBase() + '.doc');
+}
+function closePlUnitModal(){
+    document.getElementById('pl-unit-modal').style.display = 'none';
+    if (plUnitChart) { plUnitChart.destroy(); plUnitChart = null; }
+}
+function plExportRows(){
+    return lastPlData.map((r,idx)=>[idx+1, r.unit.name, typeof r.col1!=='undefined'?r.col1:'', typeof r.col2!=='undefined'?r.col2:'', typeof r.tyLe!=='undefined'?fmtPct(r.tyLe):'', typeof r.tyLe!=='undefined'?(r.tyLe>=60?'Đạt':'Không Đạt'):'Chưa đủ dữ liệu']);
+}
+function plTitle(mKey){ return (currentPlTab===2 ? 'Phụ lục 2 - Kết quả chỉ tiêu tháng ' : 'Phụ lục 3 - Lũy kế chỉ tiêu đến ') + monthLabel(mKey); }
 function exportPhuLucExcel(){
     const mKey = document.getElementById('pl-month-select').value;
     const col1Label = currentPlTab===2 ? 'Số lượt đánh giá (V03)' : 'Lũy kế lượt (V03)';
     const col2Label = currentPlTab===2 ? 'Tổng TTHC' : 'Lũy kế TTHC';
-    const data = [["STT","Đơn vị",col1Label,col2Label,"Tỷ lệ %","Đánh giá"]];
-    lastPlData.forEach((r,idx)=> data.push([idx+1, r.unit.name, typeof r.col1!=='undefined'?r.col1:'', typeof r.col2!=='undefined'?r.col2:'', typeof r.tyLe!=='undefined'?fmtPct(r.tyLe):'', typeof r.tyLe!=='undefined'?(r.tyLe>=60?'Đạt':'Không Đạt'):'Chưa đủ dữ liệu']));
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), currentPlTab===2 ? "Phu luc 2" : "Phu luc 3");
-    XLSX.writeFile(wb, `PhuLuc${currentPlTab}_${mKey}.xlsx`);
+    return downloadStyledExcel({ sheet:currentPlTab===2 ? "Phu luc 2" : "Phu luc 3", filename:`PhuLuc${currentPlTab}_${mKey}.xlsx`,
+        title:plTitle(mKey), headers:["STT","Đơn vị",col1Label,col2Label,"Tỷ lệ %","Đánh giá"], rows:plExportRows(), leftCols:[1] });
 }
 function exportPhuLucWord(){
     const mKey = document.getElementById('pl-month-select').value;
-    const title = (currentPlTab===2 ? 'Phụ lục 2 - Kết quả chỉ tiêu tháng ' : 'Phụ lục 3 - Lũy kế chỉ tiêu đến ') + monthLabel(mKey);
-    let rowsHtml = lastPlData.map((r,idx)=>`<tr><td>${idx+1}</td><td>${r.unit.name}</td><td align="center">${typeof r.col1!=='undefined'?r.col1:''}</td><td align="center">${typeof r.col2!=='undefined'?r.col2:''}</td><td align="center">${typeof r.tyLe!=='undefined'?fmtPct(r.tyLe):''}</td><td align="center">${typeof r.tyLe!=='undefined'?(r.tyLe>=60?'Đạt':'Không Đạt'):'Chưa đủ dữ liệu'}</td></tr>`).join('');
-    exportHtmlAsWord(title,
-        `<table border="1" cellspacing="0" cellpadding="4" style="border-collapse:collapse; font-size:12px;">
-        <tr><th>STT</th><th>Đơn vị</th><th>Số lượt</th><th>Tổng TTHC</th><th>Tỷ lệ %</th><th>Đánh giá</th></tr>${rowsHtml}</table>`,
+    exportHtmlAsWord(plTitle(mKey),
+        styledWordBody({ headers:["STT","Đơn vị","Số lượt","Tổng TTHC","Tỷ lệ %","Đánh giá"], rows:plExportRows(), leftCols:[1] }),
         `PhuLuc${currentPlTab}_${mKey}.doc`);
 }
 
