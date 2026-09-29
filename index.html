@@ -739,7 +739,13 @@ table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
           <button class="back-btn" onclick="showAdminSub('caidat')"><i class="fa-solid fa-chevron-left"></i></button>
           <h2 class="page-title">Danh sách tài khoản</h2>
         </div>
-        <div class="card"><div id="admin-account-list"></div></div>
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; padding-bottom:10px; border-bottom:1px solid var(--border);">
+            <label style="display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:600; cursor:pointer;"><input type="checkbox" id="acc-select-all" onchange="toggleSelectAllAccounts(this.checked)"> Chọn tất cả</label>
+            <button class="btn btn-primary" style="width:auto; padding:8px 14px; font-size:13px;" onclick="adminResetSelectedPasswords()"><i class="fa-solid fa-key"></i> Đặt lại mật khẩu (<span id="acc-selected-count">0</span>)</button>
+          </div>
+          <div id="admin-account-list"></div>
+        </div>
       </div>
     </div>
 
@@ -756,10 +762,47 @@ table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
             <input type="text" id="new-acc-unit" class="form-control" placeholder="Gõ để tìm đơn vị..." autocomplete="off" oninput="filterUnitSuggestions('new-acc-unit','new-acc-unit-suggest')" onfocus="filterUnitSuggestions('new-acc-unit','new-acc-unit-suggest')">
             <div id="new-acc-unit-suggest" class="unit-suggest-box" style="display:none;"></div>
           </div>
-          <div class="form-group"><label>Tên đăng nhập</label><input type="text" id="new-acc-username" class="form-control" placeholder="do admin đặt, vd: ca_tanquang"></div>
-          <div class="form-group"><label>Mật khẩu ban đầu</label><input type="text" id="new-acc-password" class="form-control" placeholder="Tối thiểu 6 ký tự"></div>
-          <div class="form-group"><label>Email liên kết</label><input type="email" id="new-acc-email" class="form-control" placeholder="email đơn vị nhận thông báo"></div>
+          <div class="form-group"><label>Tên đăng nhập</label><input type="text" id="new-acc-username" class="form-control" placeholder="vd: pc06.tuyenquang hoặc thuonglam.bca"></div>
+          <div class="form-group"><label>Mật khẩu ban đầu</label><input type="text" id="new-acc-password" class="form-control" placeholder="Tối thiểu 6 ký tự, vd: 123456"></div>
+          <div class="form-group"><label>Email liên kết (không bắt buộc)</label><input type="email" id="new-acc-email" class="form-control" placeholder="Để trống nếu chưa có"></div>
           <button class="btn btn-black" onclick="adminCreateUnitAccount()">Tạo tài khoản</button>
+        </div>
+        <div class="card">
+          <h2>Tạo / cập nhật hàng loạt bằng Excel</h2>
+          <div class="note" style="margin-bottom:10px; font-size:12.5px; line-height:1.5;">
+            Export danh sách → điền <b>Tên đăng nhập</b>, <b>Mật khẩu</b> (≥ 6 ký tự), <b>Email</b> (không bắt buộc) → Import. Đơn vị đã có tài khoản mà điền đủ sẽ bị <b>ghi đè</b> (dùng để đặt lại mật khẩu); để trống mật khẩu thì giữ mật khẩu cũ (vẫn cập nhật tên đăng nhập/email nếu bạn sửa).
+          </div>
+          <div class="btn-row" style="margin-bottom:10px;">
+            <button class="btn btn-outline" onclick="exportAccountTemplate()"><i class="fa-solid fa-file-export"></i> Export danh sách</button>
+          </div>
+          <div class="file-drop" onclick="document.getElementById('acc-import-file').click()">
+            <i class="fa-solid fa-file-arrow-up"></i>
+            <div id="acc-import-label">Nhấn để chọn file Excel đã điền để Import</div>
+          </div>
+          <input type="file" id="acc-import-file" style="display:none;" accept=".xlsx,.xls" onchange="handleAccountImportFile(event)">
+          <button class="btn btn-primary" onclick="runAccountImport()">Import tài khoản</button>
+          <div id="acc-import-status" class="note" style="margin-top:8px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SỬA TÀI KHOẢN -->
+    <div id="admin-editaccount" class="admin-sub">
+      <div class="content-pad">
+        <div class="page-title-row">
+          <button class="back-btn" onclick="showAdminSub('taikhoan')"><i class="fa-solid fa-chevron-left"></i></button>
+          <h2 class="page-title">Sửa tài khoản</h2>
+        </div>
+        <div class="card">
+          <div class="form-group"><label>Tên đăng nhập</label><input type="text" id="edit-acc-username" class="form-control" disabled></div>
+          <div class="note" style="margin:-8px 0 12px; font-size:12px;">Không thể đổi tên đăng nhập. Cần tên khác thì tạo tài khoản mới.</div>
+          <div class="form-group" style="position:relative;">
+            <label>Đơn vị</label>
+            <input type="text" id="edit-acc-unit" class="form-control" placeholder="Gõ để tìm đơn vị..." autocomplete="off" oninput="filterUnitSuggestions('edit-acc-unit','edit-acc-unit-suggest')" onfocus="filterUnitSuggestions('edit-acc-unit','edit-acc-unit-suggest')">
+            <div id="edit-acc-unit-suggest" class="unit-suggest-box" style="display:none;"></div>
+          </div>
+          <div class="form-group"><label>Email liên kết</label><input type="email" id="edit-acc-email" class="form-control" placeholder="email đơn vị nhận thông báo"></div>
+          <button class="btn btn-black" onclick="adminSaveAccountInfo()">Lưu thay đổi</button>
         </div>
       </div>
     </div>
@@ -800,6 +843,13 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
 const AUTH_EMAIL_DOMAIN = "@vneid-tuyenquang.local";
+async function sha256Hex(text){
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function ensureAnonAuth(){
+    return auth.currentUser ? Promise.resolve() : auth.signInAnonymously();
+}
 const DEADLINE_DAY = 16;
 const DANH_SACH_129_DON_VI = ["Phòng Hồ sơ nghiệp vụ", "Phòng Cảnh sát quản lý hành chính về trật tự xã hội", "Phòng Cảnh sát phòng cháy, chữa cháy và cứu nạn, cứu hộ", "Phòng Cảnh sát giao thông", "Phòng Quản lý xuất nhập cảnh", "Công an Xã Thượng Lâm", "Công an Xã Lâm Bình", "Công an Xã Minh Quang", "Công an Xã Bình An", "Công an Xã Côn Lôn", "Công an Xã Yên Hoa", "Công an Xã Thượng Nông", "Công an Xã Hồng Thái", "Công an Xã Nà Hang", "Công an Xã Tân Mỹ", "Công an Xã Yên Lập", "Công an Xã Tân An", "Công an Xã Chiêm Hóa", "Công an Xã Hòa An", "Công an Xã Kiên Đài", "Công an Xã Tri Phú", "Công an Xã Kim Bình", "Công an Xã Yên Nguyên", "Công an Xã Trung Hà", "Công an Xã Yên Phú", "Công an Xã Bạch Xa", "Công an Xã Phù Lưu", "Công an Xã Hàm Yên", "Công an Xã Bình Xa", "Công an Xã Thái Sơn", "Công an Xã Thái Hoà", "Công an Xã Hùng Đức", "Công an Xã Yên Sơn", "Công an Xã Hùng Lợi", "Công an Xã Trung Sơn", "Công an Xã Thái Bình", "Công an Xã Tân Long", "Công an Xã Xuân Vân", "Công an Xã Lực Hành", "Công an Xã Nhữ Khê", "Công an Xã Kiến Thiết", "Công an Xã Tân Trào", "Công an Xã Minh Thanh", "Công an Xã Sơn Dương", "Công an Xã Bình Ca", "Công an Xã Tân Thanh", "Công an Xã Sơn Thủy", "Công an Xã Phú Lương", "Công an Xã Trường Sinh", "Công an Xã Hồng Sơn", "Công an Xã Đông Thọ", "Công an Phường Mỹ Lâm", "Công an Phường Minh Xuân", "Công an Phường Nông Tiến", "Công an Phường An Tường", "Công an Phường Bình Thuận", "Công an Xã Lũng Cú", "Công an Xã Đồng Văn", "Công an Xã Sà Phìn", "Công an Xã Phố Bảng", "Công an Xã Lũng Phìn", "Công an Xã Sủng Máng", "Công an Xã Sơn Vĩ", "Công an Xã Mèo Vạc", "Công an Xã Khâu Vai", "Công an Xã Niêm Sơn", "Công an Xã Tát Ngà", "Công an Xã Thắng Mố", "Công an Xã Bạch Đích", "Công an Xã Yên Minh", "Công an Xã Mậu Duệ", "Công an Xã Ngọc Long", "Công an Xã Du Già", "Công an Xã Đường Thượng", "Công an Xã Lùng Tám", "Công an Xã Cán Tỷ", "Công an Xã Nghĩa Thuận", "Công an Xã Quản Bạ", "Công an Xã Tùng Vài", "Công an Xã Yên Cường", "Công an Xã Đường Hồng", "Công an Xã Bắc Mê", "Công an Xã Giáp Trung", "Công an Xã Minh Sơn", "Công an Xã Minh Ngọc", "Công an Xã Ngọc Đường", "Công an Phường Hà Giang 1", "Công an Phường Hà Giang 2", "Công an Xã Lao Chải", "Công an Xã Thanh Thuỷ", "Công an Xã Minh Tân", "Công an Xã Thuận Hoà", "Công an Xã Tùng Bá", "Công an Xã Phú Linh", "Công an Xã Linh Hồ", "Công an Xã Bạch Ngọc", "Công an Xã Vị Xuyên", "Công an Xã Việt Lâm", "Công an Xã Cao Bồ", "Công an Xã Thượng Sơn", "Công an Xã Tân Quang", "Công an Xã Đồng Tâm", "Công an Xã Liên Hiệp", "Công an Xã Bằng Hành", "Công an Xã Bắc Quang", "Công an Xã Hùng An", "Công an Xã Vĩnh Tuy", "Công an Xã Đồng Yên", "Công an Xã Tiên Yên", "Công an Xã Xuân Giang", "Công an Xã Bằng Lang", "Công an Xã Yên Thành", "Công an Xã Quang Bình", "Công an Xã Tân Trịnh", "Công an Xã Tiên Nguyên", "Công an Xã Thông Nguyên", "Công an Xã Hồ Thầu", "Công an Xã Nậm Dịch", "Công an Xã Tân Tiến", "Công an Xã Hoàng Su Phì", "Công an Xã Thàng Tín", "Công an Xã Bản Máy", "Công an Xã Pờ Ly Ngài", "Công an Xã Xín Mần", "Công an Xã Pà Vầy Sủ", "Công an Xã Nấm Dẩn", "Công an Xã Trung Thịnh", "Công an Xã Quảng Nguyên", "Công an Xã Khuôn Lùng"];
 
@@ -908,7 +958,7 @@ function checkAuthGate(){
     const savedUsername = localStorage.getItem('vneid_username');
     const savedRole = localStorage.getItem('vneid_role');
     if (savedUsername && savedRole){
-        db.collection('users').doc(savedUsername).get().then(doc=>{
+        ensureAnonAuth().then(()=>db.collection('users').doc(savedUsername).get()).then(doc=>{
             showLoading(false);
             if (doc.exists){
                 currentUserDoc = Object.assign({username: savedUsername}, doc.data());
@@ -935,17 +985,29 @@ function processLogin(){
     const password = document.getElementById('login-password').value.trim();
     if (!username || !password){ customAlert('Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!', 'error'); return; }
     showLoading(true);
-    const email = username + AUTH_EMAIL_DOMAIN;
-    auth.signInWithEmailAndPassword(email, password).then(() => db.collection('users').doc(username).get())
-    .then(doc => {
+    ensureAnonAuth().then(()=>db.collection('users').doc(username).get()).then(async doc => {
+        if (!doc.exists){ showLoading(false); customAlert('Sai tên đăng nhập hoặc mật khẩu!', 'error'); return; }
+        const data = doc.data();
+        if (data.role === 'admin'){
+            auth.signInWithEmailAndPassword(username+AUTH_EMAIL_DOMAIN, password).then(()=>{
+                showLoading(false);
+                currentUserDoc = Object.assign({username: username}, data);
+                currentRole = currentUserDoc.role;
+                localStorage.setItem('vneid_username', username);
+                localStorage.setItem('vneid_role', currentRole);
+                enterApp();
+            }).catch(()=>{ showLoading(false); customAlert('Sai tên đăng nhập hoặc mật khẩu!', 'error'); });
+            return;
+        }
+        const hash = await sha256Hex(password);
+        if (data.passwordHash !== hash){ showLoading(false); customAlert('Sai tên đăng nhập hoặc mật khẩu!', 'error'); return; }
         showLoading(false);
-        if (!doc.exists){ customAlert('Không tìm thấy hồ sơ tài khoản!', 'error'); return; }
-        currentUserDoc = Object.assign({username: username}, doc.data());
+        currentUserDoc = Object.assign({username: username}, data);
         currentRole = currentUserDoc.role;
         localStorage.setItem('vneid_username', username);
         localStorage.setItem('vneid_role', currentRole);
         enterApp();
-    }).catch(()=>{ showLoading(false); customAlert('Sai tên đăng nhập hoặc mật khẩu!', 'error'); });
+    }).catch(err=>{ showLoading(false); customAlert('Lỗi: '+err.message, 'error'); });
 }
 
 function processFirstSetup(){
@@ -1427,17 +1489,24 @@ function userChangePassword(){
     triggerHaptic();
     const newPass = document.getElementById('user-new-password').value.trim();
     if (newPass.length<6){ customAlert('Mật khẩu tối thiểu 6 ký tự!', 'error'); return; }
-    const user = auth.currentUser;
-    if (!user){ customAlert('Phiên đăng nhập hết hạn, vui lòng đăng nhập lại!', 'error'); return; }
     showLoading(true);
-    user.updatePassword(newPass).then(()=>{
+    if (currentRole === 'admin'){
+        const user = auth.currentUser;
+        if (!user){ showLoading(false); customAlert('Phiên đăng nhập hết hạn, vui lòng đăng nhập lại!', 'error'); return; }
+        user.updatePassword(newPass).then(()=>{
+            showLoading(false); customAlert('Đã đổi mật khẩu thành công!');
+            document.getElementById('user-new-password').value = '';
+        }).catch(err=>{
+            showLoading(false);
+            if (err.code==='auth/requires-recent-login') customAlert('Vui lòng đăng xuất rồi đăng nhập lại trước khi đổi mật khẩu!', 'error');
+            else customAlert('Lỗi: '+err.message, 'error');
+        });
+        return;
+    }
+    sha256Hex(newPass).then(passwordHash=>db.collection('users').doc(currentUserDoc.username).update({ passwordHash })).then(()=>{
         showLoading(false); customAlert('Đã đổi mật khẩu thành công!');
         document.getElementById('user-new-password').value = '';
-    }).catch(err=>{
-        showLoading(false);
-        if (err.code==='auth/requires-recent-login') customAlert('Vui lòng đăng xuất rồi đăng nhập lại trước khi đổi mật khẩu!', 'error');
-        else customAlert('Lỗi: '+err.message, 'error');
-    });
+    }).catch(err=>{ showLoading(false); customAlert('Lỗi: '+err.message, 'error'); });
 }
 function saveReminderEmail(){
     triggerHaptic();
@@ -1481,7 +1550,7 @@ function closeUserNotice(){ document.getElementById('user-notice-modal').style.d
 function showAdminSub(name){
     document.querySelectorAll('.admin-sub').forEach(s=>s.classList.remove('active'));
     document.getElementById('admin-'+name).classList.add('active');
-    ['tongquan','nhapv03','doichieu','phuluc','caidat'].forEach(n=>{
+    ['tongquan','nhapv03','doichieu','phuluc','caidat','taikhoan','newaccount','editaccount'].forEach(n=>{
         const btn = document.getElementById('anav-'+n);
         if (btn) btn.classList.toggle('active', n===name);
     });
@@ -1671,12 +1740,16 @@ function openOvList(kind){
 }
 // --------- ĐỊNH DẠNG FILE XUẤT (dùng chung) ---------
 // headers: mảng tiêu đề cột; rows: mảng các dòng; leftCols: chỉ số cột căn trái (cột chữ); title/sub: tùy chọn
-async function downloadStyledExcel({ sheet, filename, title, sub, headers, rows, leftCols=[0], boldLast=false }){
+async function downloadStyledExcel({ sheet, filename, title, sub, headers, rows, leftCols=[0], boldLast=false, autoFit=false }){
     const nCol = headers.length;
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet(sheet);
     const widths = headers.map((h,i)=>{
         if (h === 'STT') return 7;
+        if (autoFit){
+            const len = Math.max(h.length, ...rows.map(r=>String(r[i] == null ? '' : r[i]).length), 0);
+            return Math.min(60, Math.max(12, len + 4));
+        }
         const maxLen = Math.max(...rows.map(r=>String(r[i] == null ? '' : r[i]).length), 0);
         return leftCols.includes(i) ? Math.min(60, Math.max(12, maxLen + 4)) : Math.min(26, Math.max(12, h.length + 4));
     });
@@ -1718,7 +1791,7 @@ async function downloadStyledExcel({ sheet, filename, title, sub, headers, rows,
             cell.font = font(isLast ? { bold:true } : {});
             if (isLast) cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFDDEBF7'} };
             cell.border = border;
-            cell.alignment = { horizontal: leftCols.includes(k) ? 'left' : 'center', vertical:'middle' };
+            cell.alignment = { horizontal: leftCols.includes(k) ? 'left' : 'center', vertical:'middle', wrapText:autoFit };
             if (typeof v === 'number' && !leftCols.includes(k) && headers[k] !== 'STT') cell.numFmt = '#,##0';
         });
     });
@@ -2325,21 +2398,53 @@ function logReminderSent(mode, recipientUnitIds){
 
 function renderAdminAccountList(){
     showLoading(true);
-    const mKey = currentMonthKey();
-    Promise.all([db.collection('users').where('role','==','unit').get(), getReportsForMonth(mKey)]).then(([snap, reportRows])=>{
+    db.collection('users').where('role','==','unit').get().then(snap=>{
         showLoading(false);
-        const submitted = new Set(reportRows.map(r=>r.unitId));
         const accounts = []; snap.forEach(d=>accounts.push(d.data()));
         accounts.sort((a,b)=>(a.unitName||'').localeCompare(b.unitName||''));
         document.getElementById('admin-account-list').innerHTML = accounts.map(acc=>`
             <div class="list-row">
-                <div><div class="title">${acc.unitName}</div><div class="sub">@${acc.username} · ${acc.email||'chưa có email'}</div></div>
+                <label style="display:flex; align-items:center; gap:10px; flex:1; min-width:0; cursor:pointer;">
+                    <input type="checkbox" class="acc-check" value="${acc.username}" onchange="updateAccountSelection()">
+                    <div><div class="title">${acc.unitName}</div><div class="sub">@${acc.username} · ${acc.email||'chưa có email'}</div></div>
+                </label>
                 <div style="display:flex; align-items:center; gap:10px;">
-                    ${submitted.has(acc.unitId||acc.username) ? '<span class="badge badge-green">Đã nộp</span>' : '<span class="badge badge-red">Chưa nộp</span>'}
+                    <button class="btn-outline" style="padding:5px 9px; border-radius:8px; font-size:12px;" onclick="openEditAccount('${acc.username}')"><i class="fa-solid fa-pen"></i></button>
                     <button class="btn-danger-outline" style="padding:5px 9px; border-radius:8px; font-size:12px;" onclick="adminDeleteAccount('${acc.username}')"><i class="fa-solid fa-trash"></i></button>
                 </div>
             </div>`).join('') || '<div class="note">Chưa có tài khoản nào.</div>';
+        updateAccountSelection();
     });
+}
+function updateAccountSelection(){
+    const all = document.querySelectorAll('.acc-check');
+    const n = document.querySelectorAll('.acc-check:checked').length;
+    document.getElementById('acc-selected-count').innerText = n;
+    document.getElementById('acc-select-all').checked = all.length > 0 && n === all.length;
+}
+function toggleSelectAllAccounts(checked){
+    document.querySelectorAll('.acc-check').forEach(c=>c.checked = checked);
+    updateAccountSelection();
+}
+function adminResetSelectedPasswords(){
+    triggerHaptic();
+    const usernames = Array.from(document.querySelectorAll('.acc-check:checked')).map(c=>c.value);
+    if (!usernames.length) return customAlert('Vui lòng chọn ít nhất một tài khoản!', 'error');
+    const isAll = usernames.length === document.querySelectorAll('.acc-check').length;
+    const newPass = prompt(`Nhập mật khẩu mới cho ${isAll ? 'TOÀN BỘ ' : ''}${usernames.length} tài khoản đã chọn (tối thiểu 6 ký tự):`, '123456');
+    if (newPass === null) return;
+    if (newPass.trim().length<6) return customAlert('Mật khẩu tối thiểu 6 ký tự!', 'error');
+    if (!confirm(`Đặt lại mật khẩu của ${isAll ? 'TOÀN BỘ ' : ''}${usernames.length} tài khoản thành "${newPass.trim()}"?\nMật khẩu cũ sẽ mất hiệu lực ngay lập tức.`)) return;
+    showLoading(true);
+    sha256Hex(newPass.trim()).then(passwordHash=>{
+        const batch = db.batch();
+        usernames.forEach(u=>batch.update(db.collection('users').doc(u), { passwordHash }));
+        return batch.commit();
+    }).then(()=>{
+        showLoading(false);
+        customAlert(`Đã đặt lại mật khẩu cho ${usernames.length} tài khoản.`);
+        toggleSelectAllAccounts(false);
+    }).catch(err=>{ showLoading(false); customAlert('Lỗi: '+err.message, 'error'); });
 }
 function adminDeleteAccount(username){
     triggerHaptic();
@@ -2351,6 +2456,36 @@ function adminDeleteAccount(username){
         renderAdminAccountList();
     }).catch(err=>{ showLoading(false); customAlert('Lỗi xóa tài khoản: '+err.message, 'error'); });
 }
+function openEditAccount(username){
+    triggerHaptic();
+    showLoading(true);
+    db.collection('users').doc(username).get().then(doc=>{
+        showLoading(false);
+        if (!doc.exists) return customAlert('Không tìm thấy tài khoản.', 'error');
+        const acc = doc.data();
+        document.getElementById('edit-acc-username').value = acc.username;
+        const unitInput = document.getElementById('edit-acc-unit');
+        unitInput.value = acc.unitName || '';
+        unitInput.dataset.unitId = acc.unitId || '';
+        document.getElementById('edit-acc-email').value = acc.email || '';
+        showAdminSub('editaccount');
+    }).catch(err=>{ showLoading(false); customAlert('Lỗi: '+err.message, 'error'); });
+}
+function adminSaveAccountInfo(){
+    triggerHaptic();
+    const username = document.getElementById('edit-acc-username').value;
+    const unitInput = document.getElementById('edit-acc-unit');
+    const unitId = unitInput.dataset.unitId;
+    const unitName = unitInput.value.trim();
+    const email = document.getElementById('edit-acc-email').value.trim();
+    if (!unitId || !unitName || !email) return customAlert('Vui lòng điền đầy đủ Đơn vị và Email!', 'error');
+    showLoading(true);
+    db.collection('users').doc(username).update({ unitId, unitName, email }).then(()=>{
+        showLoading(false);
+        customAlert('Đã lưu thay đổi.');
+        showAdminSub('taikhoan');
+    }).catch(err=>{ showLoading(false); customAlert('Lỗi: '+err.message, 'error'); });
+}
 function adminCreateUnitAccount(){
     triggerHaptic();
     const unitInput = document.getElementById('new-acc-unit');
@@ -2359,22 +2494,16 @@ function adminCreateUnitAccount(){
     const username = document.getElementById('new-acc-username').value.trim().toLowerCase();
     const password = document.getElementById('new-acc-password').value.trim();
     const email = document.getElementById('new-acc-email').value.trim();
-    if (!unitId || !unitName || !username || password.length<6 || !email){
-        customAlert('Vui lòng điền đầy đủ thông tin, mật khẩu tối thiểu 6 ký tự!', 'error'); return;
+    if (!unitId || !unitName || !username || password.length<6){
+        customAlert('Vui lòng chọn đơn vị, nhập tên đăng nhập và mật khẩu (tối thiểu 6 ký tự)!', 'error'); return;
     }
     showLoading(true);
-    db.collection('users').doc(username).get().then(existing=>{
+    db.collection('users').doc(username).get().then(async existing=>{
         if (existing.exists) throw { code:'custom/exists' };
-        const secondaryName = 'secondary_' + Date.now();
-        const secondaryApp = firebase.initializeApp(firebaseConfig, secondaryName);
-        const secondaryAuth = secondaryApp.auth();
-        return secondaryAuth.createUserWithEmailAndPassword(username+AUTH_EMAIL_DOMAIN, password).then(()=>{
-            return secondaryAuth.signOut().then(()=>secondaryApp.delete());
-        }).then(()=>{
-            return db.collection('users').doc(username).set({
-                username, role:'unit', unitId, unitName, email,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
+        const passwordHash = await sha256Hex(password);
+        return db.collection('users').doc(username).set({
+            username, role:'unit', unitId, unitName, email, passwordHash,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
     }).then(()=>{
         showLoading(false);
@@ -2386,6 +2515,136 @@ function adminCreateUnitAccount(){
         if (err && err.code==='custom/exists') customAlert('Tên đăng nhập đã tồn tại!', 'error');
         else customAlert('Lỗi tạo tài khoản: ' + (err.message||err), 'error');
     });
+}
+let accImportFile = null;
+const PHONG_USERNAMES = {
+    'phòng hồ sơ nghiệp vụ':'pv06',
+    'phòng cảnh sát quản lý hành chính về trật tự xã hội':'pc06',
+    'phòng cảnh sát phòng cháy, chữa cháy và cứu nạn, cứu hộ':'pc07',
+    'phòng cảnh sát giao thông':'pc08',
+    'phòng quản lý xuất nhập cảnh':'pa08'
+};
+function defaultUnitUsername(unitName){
+    const name = unitName.trim().toLowerCase();
+    if (PHONG_USERNAMES[name]) return PHONG_USERNAMES[name] + '.tuyenquang';
+    const m = name.match(/^công an\s+(?:xã|phường|thị trấn)\s+(.+)$/);
+    if (!m) return '';
+    const slug = m[1].replace(/đ/g,'d').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+    return slug ? slug + '.bca' : '';
+}
+function exportAccountTemplate(){
+    showLoading(true);
+    db.collection('users').where('role','==','unit').get().then(snap=>{
+        showLoading(false);
+        const accByUnit = {}; snap.forEach(d=>{ const a=d.data(); accByUnit[a.unitId]=a; });
+        const data = [["Mã đơn vị","Tên đơn vị","Tên đăng nhập","Mật khẩu ban đầu","Email"]];
+        unitCatalog.forEach(u=>{
+            const acc = accByUnit[u.id];
+            data.push([u.code||u.id, u.name, acc ? acc.username : defaultUnitUsername(u.name), acc ? "" : "123456", acc ? (acc.email||"") : ""]);
+        });
+        downloadStyledExcel({ sheet:"TaiKhoan", filename:"Mau_TaoTaiKhoan.xlsx",
+            headers:data[0], rows:data.slice(1), leftCols:[1,2,3,4], autoFit:true });
+    }).catch(err=>{ showLoading(false); customAlert('Lỗi: '+err.message, 'error'); });
+}
+function handleAccountImportFile(e){
+    accImportFile = e.target.files[0] || null;
+    document.getElementById('acc-import-label').innerText = accImportFile ? accImportFile.name : 'Nhấn để chọn file Excel đã điền để Import';
+}
+function runAccountImport(){
+    triggerHaptic();
+    if (!accImportFile) return customAlert('Vui lòng chọn file trước!', 'error');
+    const statusEl = document.getElementById('acc-import-status');
+    statusEl.innerText = 'Đang xử lý...';
+    showLoading(true);
+    const reader = new FileReader();
+    reader.onload = (ev)=>{
+        const wb = XLSX.read(new Uint8Array(ev.target.result), { type:'array' });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header:1 });
+        const nameToUnit = {}; unitCatalog.forEach(u=>nameToUnit[u.name.trim().toLowerCase()]=u);
+        const codeToUnit = {}; unitCatalog.forEach(u=>codeToUnit[(u.code||'').trim().toLowerCase()]=u);
+        db.collection('users').get().then(snap=>{
+            const existingByUnit = {}; const usernameOwner = {};
+            snap.forEach(d=>{ const a=d.data();
+                if (a.role==='unit'){ existingByUnit[a.unitId]=a; usernameOwner[a.username]=a.unitId; }
+                else usernameOwner[d.id]='__reserved__'; // tài khoản admin: không được trùng/ghi đè
+            });
+            const jobs = []; let skipped = 0, alreadyHas = 0, dupUsername = 0, notFound = 0, missingInfo = 0, shortPass = 0;
+            rows.slice(1).forEach(row=>{
+                const code = (row[0]||'').toString().trim().toLowerCase();
+                const name = (row[1]||'').toString().trim().toLowerCase();
+                const username = (row[2]||'').toString().trim().toLowerCase();
+                const password = (row[3]||'').toString().trim();
+                const email = (row[4]||'').toString().trim();
+                if (!code && !name) return;
+                const unit = codeToUnit[code] || nameToUnit[name];
+                if (!unit){ skipped++; notFound++; return; }
+                const old = existingByUnit[unit.id];
+                if (!username){ if (old) alreadyHas++; else { skipped++; missingInfo++; } return; }
+                if (password && password.length<6){ skipped++; shortPass++; return; }
+                let keepHash = null;
+                if (!password){
+                    if (!old){ skipped++; missingInfo++; return; }
+                    if (username===old.username && email===(old.email||'')){ alreadyHas++; return; }
+                    keepHash = old.passwordHash; // đơn vị đã có tài khoản, không điền mật khẩu: chỉ đổi tên đăng nhập/email, giữ mật khẩu cũ
+                }
+                if ((usernameOwner[username] && usernameOwner[username]!==unit.id) || jobs.some(j=>j.username===username)){ dupUsername++; return; }
+                jobs.push({ unit, username, password, email, keepHash, oldUsername: old ? old.username : null });
+            });
+            if (!jobs.length){
+                showLoading(false);
+                statusEl.innerText = '';
+                return customAlert(`Không có tài khoản nào được tạo/cập nhật. Không nhận diện được đơn vị: ${notFound}. Thiếu tên đăng nhập/mật khẩu: ${missingInfo}. Mật khẩu dưới 6 ký tự: ${shortPass}. Trùng tên đăng nhập: ${dupUsername}. Đơn vị có tài khoản, không thay đổi: ${alreadyHas}.`, 'error');
+            }
+            const overwriteCount = jobs.filter(j=>j.oldUsername).length;
+            if (overwriteCount && !confirm(`Có ${overwriteCount} đơn vị đã có tài khoản sẽ bị GHI ĐÈ (tên đăng nhập, mật khẩu, email cũ mất hiệu lực ngay).\nTạo mới: ${jobs.length-overwriteCount}.\n\nTiếp tục import?`)){
+                showLoading(false);
+                statusEl.innerText = '';
+                return;
+            }
+            Promise.all(jobs.map(job=>job.keepHash ? Promise.resolve(job.keepHash) : sha256Hex(job.password))).then(hashes=>{
+                const batch = db.batch();
+                jobs.forEach((job,i)=>{
+                    if (job.oldUsername && job.oldUsername!==job.username) batch.delete(db.collection('users').doc(job.oldUsername));
+                    batch.set(db.collection('users').doc(job.username), {
+                        username: job.username, role:'unit', unitId: job.unit.id, unitName: job.unit.name,
+                        email: job.email, passwordHash: hashes[i],
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                });
+                return batch.commit();
+            }).then(()=>{
+                showLoading(false);
+                statusEl.innerText = '';
+                document.getElementById('acc-import-file').value = '';
+                accImportFile = null;
+                document.getElementById('acc-import-label').innerText = 'Nhấn để chọn file Excel đã điền để Import';
+                showAccountImportDoneModal(jobs.length, alreadyHas, skipped+dupUsername);
+                renderAdminAccountList();
+            }).catch(err=>{ showLoading(false); statusEl.innerText = ''; customAlert('Lỗi: '+err.message, 'error'); });
+        });
+    };
+    reader.readAsArrayBuffer(accImportFile);
+}
+function showAccountImportDoneModal(count, alreadyHas, skipped){
+    const old = document.getElementById('import-done-modal'); if (old) old.remove();
+    const el = document.createElement('div');
+    el.id = 'import-done-modal';
+    el.className = 'modal-overlay';
+    el.onclick = (ev)=>{ if (ev.target === el) el.remove(); };
+    el.innerHTML = `<div class="modal-box card done-modal">
+        <div class="done-logo"><img src="vneid-logo.png" alt="VNeID"></div>
+        <div class="done-check"><i class="fa-solid fa-check"></i></div>
+        <h3>Import hoàn tất</h3>
+        <div class="done-sub">Đã tạo/cập nhật tài khoản hàng loạt</div>
+        <div class="done-stats">
+            <div><span>Tài khoản đã tạo/cập nhật</span><b>${count}</b></div>
+            <div><span>Đơn vị đã có tài khoản, để trống (giữ nguyên)</span><b>${alreadyHas}</b></div>
+            ${skipped ? `<div><span>Dòng bị bỏ qua (thiếu/trùng thông tin)</span><b style="color:#fbbf24;">${skipped}</b></div>` : ''}
+        </div>
+        <button class="btn btn-black" onclick="document.getElementById('import-done-modal').remove()">Đóng</button>
+    </div>`;
+    document.body.appendChild(el);
 }
 </script>
 </body>
