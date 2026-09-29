@@ -85,6 +85,11 @@ body { margin:0; font-family: 'Inter', -apple-system, sans-serif; background: va
 .badge-green { background: var(--green-bg); color: var(--green-text); }
 .badge-red { background: var(--red-bg); color: var(--red-text); }
 .badge-amber { background: var(--amber-bg); color: var(--amber-text); }
+.fiscal-tbl { width:100%; border-collapse:collapse; font-size:11.5px; }
+.fiscal-tbl th { font-size:10.5px; line-height:1.25; padding:6px 3px; color:var(--text-muted); font-weight:600; text-align:center; border-bottom:1px solid var(--border); }
+.fiscal-tbl td { padding:8px 4px; text-align:center; border-bottom:1px solid var(--border); }
+.fiscal-tbl td:first-child { text-align:left; font-weight:600; white-space:nowrap; }
+.fiscal-tbl tr:last-child td { border-bottom:none; }
 .stat-grid { display:flex; gap:10px; margin-bottom:14px; }
 .stat-box { flex:1; background: var(--bg); border-radius:12px; padding:12px; text-align:center; }
 .stat-box .n { font-size:20px; font-weight:800; text-shadow: 0 0 4px rgba(56,189,248,0.8), 0 0 14px rgba(34,211,238,0.5); }
@@ -197,6 +202,16 @@ table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
 .unit-suggest-item:hover { background: var(--bg); }
 .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:200; padding:20px; }
 .modal-box { max-width:360px; width:100%; }
+.done-modal { text-align:center; padding:26px 20px 20px; animation:donePop .28s ease-out; }
+.done-modal .done-logo { width:84px; height:84px; margin:0 auto 10px; filter:drop-shadow(0 0 14px rgba(56,189,248,0.55)); }
+.done-modal .done-logo img { width:100%; height:100%; object-fit:contain; }
+.done-modal .done-check { width:34px; height:34px; border-radius:50%; background:#16a34a; color:#fff; display:flex; align-items:center; justify-content:center; margin:-22px auto 12px; position:relative; left:32px; border:3px solid #0d1938; font-size:15px; }
+.done-modal h3 { margin:0 0 6px; font-size:17px; color:var(--text-main); }
+.done-modal .done-sub { font-size:12.5px; color:var(--text-muted); margin-bottom:14px; line-height:1.5; }
+.done-modal .done-stats { display:flex; flex-direction:column; gap:6px; background:rgba(2,8,23,0.55); border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-bottom:16px; font-size:12.5px; text-align:left; }
+.done-modal .done-stats div { display:flex; justify-content:space-between; gap:10px; }
+.done-modal .done-stats b { color:var(--text-main); }
+@keyframes donePop { from { transform:scale(.9); opacity:0; } to { transform:scale(1); opacity:1; } }
 .loading-overlay { position:fixed; inset:0; background:rgba(5,11,31,0.65); display:none; align-items:center; justify-content:center; z-index:999; }
 .loading-overlay.show { display:flex; }
 .loading-box { background:#ffffff; border-radius:18px; padding:22px 28px; display:flex; flex-direction:column; align-items:center; gap:12px; box-shadow: 0 0 24px rgba(56,189,248,0.5), 0 8px 20px rgba(0,0,0,0.3); }
@@ -298,9 +313,15 @@ table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
           <h2 class="page-title">Nhập số liệu tháng<span class="sub-line" id="input-unit-name">-</span></h2>
         </div>
         <div class="card">
+          <div id="input-deadline-box"></div>
+          <div class="form-group">
+            <label>Năm đánh giá</label>
+            <select id="input-year-select" class="form-control" onchange="onInputYearChange()"></select>
+          </div>
           <div class="form-group">
             <label>Chọn tháng báo cáo</label>
             <select id="input-month-select" class="form-control" onchange="loadInputForMonth()"></select>
+            <div class="note" id="input-period-note"></div>
           </div>
           <div id="input-status-box"></div>
           <div class="form-group">
@@ -345,6 +366,14 @@ table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
             <div class="stat-box"><div class="n" id="home-fiscal-tongtthc">0</div><div class="l">Lũy kế hồ sơ TTHC</div></div>
           </div>
           <div class="chart-wrap" style="height:230px; margin-top:6px;"><canvas id="fiscal-chart"></canvas></div>
+          <div style="font-weight:700; font-size:13px; margin:14px 0 8px;">Kết quả từng tháng trong năm đánh giá</div>
+          <div style="display:flex; gap:8px; margin-bottom:10px;">
+            <button class="btn btn-outline" style="padding:9px; font-size:13px;" onclick="exportFiscalMonthlyExcel()"><i class="fa-solid fa-file-excel"></i> Xuất Excel</button>
+            <button class="btn btn-black" style="padding:9px; font-size:13px;" onclick="exportFiscalMonthlyWord()"><i class="fa-solid fa-file-word"></i> Xuất Word</button>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="fiscal-tbl"><thead><tr><th style="text-align:left;">Tháng</th><th>Số lượt đơn vị báo cáo</th><th>Số lượt chính thức V03</th><th>Tổng TTHC</th><th>Tỷ lệ</th><th>Đánh giá</th></tr></thead><tbody id="fiscal-monthly-body"></tbody></table>
+          </div>
         </div>
       </div>
     </div>
@@ -584,7 +613,7 @@ table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
               <li>Mở file, điền cột <b>Số lượt đánh giá chính thức V03</b> cho từng đơn vị. Cột <b>Tổng số TTHC</b> là tùy chọn. Không sửa cột Mã đơn vị và Tên đơn vị.</li>
               <li>Kiểm tra lại tháng đang chọn ở đầu trang, chọn file vừa điền rồi bấm <b>Import vào hệ thống</b>.</li>
             </ol>
-            Lưu ý: số liệu được nhập cho tháng đang chọn (không đọc tháng từ file); dòng để trống số lượt sẽ bị bỏ qua; đơn vị đã có số liệu sẽ bị ghi đè bằng số trong file.
+            Lưu ý: số liệu được nhập cho tháng đang chọn (không đọc tháng từ file); ô để trống (số lượt V03 hoặc Tổng số TTHC) sẽ xóa số liệu cũ và hiện "Chưa có"; đơn vị đã có số liệu sẽ bị ghi đè bằng số trong file.
           </div>
           <div class="btn-row" style="margin-bottom:10px;">
             <button class="btn btn-outline" onclick="exportV03Template()"><i class="fa-solid fa-file-export"></i> Export danh sách</button>
@@ -1092,7 +1121,7 @@ function populateFiscalUptoMonthSelect(evalYear){
     while (k >= startKey){ keys.push(k); k = prevMonthKey(k); }
     sel.innerHTML = keys.map(k=>{
         const [uy,um] = k.split("-").map(Number);
-        const range = rsy===uy ? `15/${pad2(rsm)}–14/${pad2(um)}` : `15/${pad2(rsm)}/${rsy}–14/${pad2(um)}/${uy}`;
+        const range = `15/${pad2(rsm)}/${rsy}–14/${pad2(um)}/${uy}`;
         return `<option value="${k}">${monthLabel(k)} (${range})</option>`;
     }).join('');
     sel.value = capKey;
@@ -1103,13 +1132,41 @@ function renderFiscalForSelection(){
     const { startKey } = fiscalYearRange(monthKey(evalYear, 9));
     const inRange = userHomeRows.filter(r => r.monthKey >= startKey && r.monthKey <= uptoKey && r.hasOfficial);
     const fTotalS = inRange.reduce((s,r)=>s+r.soLuot,0);
-    const fTotalT = inRange.reduce((s,r)=>s+r.tongTTHC,0);
+    const fTotalT = inRange.reduce((s,r)=>s+(r.tongTTHC||0),0);
     const fTyLe = fTotalT>0 ? fTotalS/fTotalT*100 : 0;
     document.getElementById('home-fiscal-tyle').innerText = fTotalT>0 ? fmtPct(fTyLe) : '--';
     document.getElementById('home-fiscal-badge').innerHTML = fTotalT>0 ? badgeHtml(fTyLe>=60) : '';
     document.getElementById('home-fiscal-soluot').innerText = fmtInt(fTotalS);
     document.getElementById('home-fiscal-tongtthc').innerText = fmtInt(fTotalT);
     renderFiscalChart(startKey, uptoKey);
+    renderFiscalMonthlyTable(evalYear, inRange);
+}
+// Bảng kết quả từng tháng (chỉ các tháng đã có số liệu chính thức V03, tính đến tháng đang chọn)
+let fiscalMonthlyCur = null;
+function renderFiscalMonthlyTable(evalYear, rows){
+    fiscalMonthlyCur = { evalYear, rows };
+    document.getElementById('fiscal-monthly-body').innerHTML = rows.length
+        ? rows.map(r=>`<tr><td>${monthLabel(r.monthKey)}</td><td>${fmtInt(r.soLuotBaoCao)}</td><td>${fmtInt(r.soLuot)}</td><td>${fmtInt(r.tongTTHC)}</td><td>${fmtPct(r.tyLe)}</td><td>${badgeHtml(r.dat)}</td></tr>`).join('')
+        : '<tr><td colspan="6" style="color:var(--text-muted); font-style:italic;">Chưa có số liệu chính thức</td></tr>';
+}
+const FISCAL_MONTHLY_HEADERS = ["Tháng","Số lượt đơn vị báo cáo","Số lượt chính thức V03","Tổng số TTHC","Tỷ lệ %","Đánh giá"];
+function fiscalMonthlyExportRows(){
+    return fiscalMonthlyCur.rows.map(r=>[monthLabel(r.monthKey), r.soLuotBaoCao, r.soLuot, r.tongTTHC, fmtPct(r.tyLe), r.dat ? 'Đạt' : 'Không Đạt']);
+}
+function fiscalMonthlyFileBase(){
+    return `KetQuaNam${fiscalMonthlyCur.evalYear}_` + currentUserDoc.unitName.replace(/[\\\/:*?"<>|,]/g,'').trim().replace(/\s+/g,'_');
+}
+function exportFiscalMonthlyExcel(){
+    if (!fiscalMonthlyCur || !fiscalMonthlyCur.rows.length) return customAlert('Chưa có số liệu chính thức để xuất.', 'error');
+    return downloadStyledExcel({ sheet:'Nam danh gia ' + fiscalMonthlyCur.evalYear, filename:fiscalMonthlyFileBase() + '.xlsx',
+        title:currentUserDoc.unitName, sub:'Kết quả ' + evalYearLabel(fiscalMonthlyCur.evalYear),
+        headers:FISCAL_MONTHLY_HEADERS, rows:fiscalMonthlyExportRows(), leftCols:[0] });
+}
+function exportFiscalMonthlyWord(){
+    if (!fiscalMonthlyCur || !fiscalMonthlyCur.rows.length) return customAlert('Chưa có số liệu chính thức để xuất.', 'error');
+    exportHtmlAsWord(currentUserDoc.unitName,
+        styledWordBody({ sub:'Kết quả ' + evalYearLabel(fiscalMonthlyCur.evalYear), headers:FISCAL_MONTHLY_HEADERS, rows:fiscalMonthlyExportRows(), leftCols:[0] }),
+        fiscalMonthlyFileBase() + '.doc');
 }
 try { if (typeof Chart !== 'undefined' && window.ChartDataLabels) { Chart.register(ChartDataLabels); Chart.defaults.set('plugins.datalabels', { display: false }); } } catch(e){ console.error('[fiscal-chart] datalabels plugin not available:', e); }
 function renderFiscalChart(startKey, uptoKey){
@@ -1245,32 +1302,74 @@ function loadUserFiscalTab(){
         customAlert('Không tải được dữ liệu lũy kế: ' + err.message, 'error');
     });
 }
-function populateInputMonthSelect(){
+let inputReported = new Set();
+// Tháng báo cáo vừa chốt số liệu gần nhất (kỳ số liệu 15/(M-1) – 14/M) và mức cảnh báo theo ngày hôm nay
+function inputDeadlineInfo(){
+    const d = new Date(), day = d.getDate();
+    const key = day >= 14 ? currentMonthKey() : prevMonthKey(currentMonthKey());
+    const level = day === 14 ? 'chot' : (day === 15 || day === 16 ? 'han' : 'qua');
+    return { key, level };
+}
+function renderInputDeadlineNotice(){
+    const box = document.getElementById('input-deadline-box');
+    const { key, level } = inputDeadlineInfo();
+    if (inputReported.has(key)) { box.innerHTML = ''; return; }
+    const m = monthLabel(key).toLowerCase();
+    const icon = '<i class="fa-solid fa-triangle-exclamation"></i>';
+    if (level === 'chot') box.innerHTML = `<div class="warn-box">${icon} Đến ngày chốt số liệu báo cáo ${m}.</div>`;
+    else if (level === 'han') box.innerHTML = `<div class="warn-box">${icon} Đã đến hạn báo cáo ${m}, đề nghị khẩn trương hoàn thành.</div>`;
+    else box.innerHTML = `<div class="warn-box" style="background:var(--red-bg); color:var(--red-text);">${icon} Đã quá hạn báo cáo số liệu ${m}.</div>`;
+}
+function renderInputPeriodNote(mKey){
+    const [y,m] = mKey.split('-').map(Number);
+    const [py,pm] = prevMonthKey(mKey).split('-').map(Number);
+    document.getElementById('input-period-note').innerText =
+        `Số liệu tính từ 15/${pad2(pm)}/${py} đến hết 14/${pad2(m)}/${y}. Hạn nhập: chậm nhất hết ngày 16/${pad2(m)}/${y}.`;
+}
+function fillInputMonths(evalYear){
     const sel = document.getElementById('input-month-select');
-    sel.innerHTML = '';
-    let key = nextMonthKey(currentMonthKey());
-    const keys = [key];
-    key = currentMonthKey();
-    for(let i=0;i<7;i++){ keys.push(key); key = prevMonthKey(key); }
+    const { startKey, endKey } = fiscalYearRange(monthKey(evalYear, 9));
+    const curKey = currentReportingMonthKey();
+    let k = endKey < curKey ? endKey : curKey;
+    const firstKey = k;
+    const opts = [];
+    while (k >= startKey){
+        opts.push(`<option value="${k}">${monthLabel(k)} (${reportingPeriodShort(k)})` + (inputReported.has(k) ? ' — Đã nhập' : ' — Chưa nhập') + `</option>`);
+        k = prevMonthKey(k);
+    }
+    sel.innerHTML = opts.join('');
+    sel.value = firstKey; // năm hiện tại: tháng đánh giá hiện tại; năm cũ: tháng cuối năm
+}
+function onInputYearChange(){
+    fillInputMonths(Number(document.getElementById('input-year-select').value));
+    loadInputForMonth();
+}
+function populateInputMonthSelect(){
     getUnitReports().then(rows=>{
-        const reported = new Set(rows.map(r=>r.monthKey));
-        keys.forEach(k=>{
-            const opt = document.createElement('option');
-            opt.value = k;
-            opt.innerText = monthLabel(k) + ` (${reportingPeriodShort(k)})` + (reported.has(k) ? ' — Đã nhập' : ' — Chưa nhập');
-            sel.appendChild(opt);
-        });
-        sel.value = reported.has(currentMonthKey()) ? nextMonthKey(currentMonthKey()) : currentMonthKey();
+        inputReported = new Set(rows.map(r=>r.monthKey));
+        const curYear = fiscalYearRange(currentReportingMonthKey()).evalYear;
+        const yearSel = document.getElementById('input-year-select');
+        let html = '';
+        for (let i=0; i<=ADMIN_EVAL_YEARS_BACK; i++) html += `<option value="${curYear-i}">${adminEvalYearLabel(curYear-i)}</option>`;
+        yearSel.innerHTML = html;
+        yearSel.value = curYear;
+        fillInputMonths(curYear);
+        renderInputDeadlineNotice();
+        loadInputForMonth();
     });
 }
 function loadInputForMonth(){
     const mKey = document.getElementById('input-month-select').value;
+    if (!mKey) return; // danh sách tháng chưa nạp xong; populateInputMonthSelect sẽ gọi lại
+    renderInputPeriodNote(mKey);
     const unitId = currentUserDoc.unitId || currentUserDoc.username;
     document.getElementById('input-soluot').value = '';
     document.getElementById('input-tongtthc').value = '';
     computeInputRatio();
+    const box = document.getElementById('input-status-box');
+    box.innerHTML = `<div class="notice-box"><i class="fa-solid fa-spinner fa-spin"></i> Đang kiểm tra số liệu tháng này...</div>`;
     db.collection('reports').doc(unitId+'_'+mKey).get().then(doc=>{
-        const box = document.getElementById('input-status-box');
+        if (document.getElementById('input-month-select').value !== mKey) return; // đã chuyển sang tháng khác
         if (doc.exists){
             box.innerHTML = `<div class="notice-box"><i class="fa-solid fa-circle-check"></i> Tháng này đã có số liệu, có thể chỉnh sửa lại.</div>`;
             document.getElementById('input-soluot').value = doc.data().soLuot;
@@ -1279,6 +1378,10 @@ function loadInputForMonth(){
         } else {
             box.innerHTML = `<div class="warn-box"><i class="fa-solid fa-triangle-exclamation"></i> Tháng này chưa có số liệu, vui lòng nhập mới.</div>`;
         }
+    }).catch(err=>{
+        if (document.getElementById('input-month-select').value !== mKey) return;
+        console.error('[loadInputForMonth] Lỗi khi tải số liệu tháng:', err);
+        box.innerHTML = `<div class="warn-box"><i class="fa-solid fa-triangle-exclamation"></i> Tháng này chưa có số liệu, vui lòng nhập mới.</div>`;
     });
 }
 function computeInputRatio(){
@@ -1401,12 +1504,17 @@ function adminEvalYearLabel(y){
     const yy = n => String(n).slice(-2);
     return `Năm đánh giá ${y} (15/9/${yy(y-1)}–14/9/${yy(y)})`;
 }
+function cumulativePeriodShort(mKey){
+    const [rsy, rsm] = prevMonthKey(fiscalYearRange(mKey).startKey).split('-').map(Number);
+    const [y, m] = mKey.split('-').map(Number);
+    return `15/${pad2(rsm)}/${rsy}–14/${pad2(m)}/${y}`;
+}
 function populateAdminMonths(name, evalYear){
     const { startKey, endKey } = fiscalYearRange(monthKey(evalYear, 9));
     const curKey = currentReportingMonthKey();
     let k = endKey < curKey ? endKey : curKey;
     const opts = [];
-    while (k >= startKey){ opts.push(`<option value="${k}">${monthLabel(k)} (${reportingPeriodShort(k)})</option>`); k = prevMonthKey(k); }
+    while (k >= startKey){ opts.push(`<option value="${k}">${monthLabel(k)} (${name==='pl' && currentPlTab===3 ? cumulativePeriodShort(k) : reportingPeriodShort(k)})</option>`); k = prevMonthKey(k); }
     document.getElementById(ADMIN_PERIOD_TABS[name].month).innerHTML = opts.join('');
 }
 function setupAdminPeriod(name){
@@ -1445,7 +1553,7 @@ function getReportsCumulative(mKey){
             const r = d.data();
             if (r.monthKey && r.monthKey>=startKey && r.monthKey<=mKey){
                 if(!map[r.unitId]) map[r.unitId]={ soLuot:0, tongTTHC:0 };
-                map[r.unitId].soLuot += r.soLuot; map[r.unitId].tongTTHC += r.tongTTHC;
+                map[r.unitId].soLuot += r.soLuot; map[r.unitId].tongTTHC += (r.tongTTHC||0);
             }
         });
         return map;
@@ -1492,7 +1600,7 @@ function renderAdminOverview(){
             if (r && typeof off !== 'undefined'){
                 const tyLe = r.tongTTHC>0 ? off/r.tongTTHC*100 : 0;
                 if (tyLe>=60) soDat++;
-                tongLuot += off; tongTTHC += r.tongTTHC;
+                tongLuot += off; tongTTHC += (r.tongTTHC||0);
                 if (!best || tyLe>best.tyLe) best = { name:u.name, tyLe };
                 if (!worst || tyLe<worst.tyLe) worst = { name:u.name, tyLe };
             }
@@ -1655,7 +1763,7 @@ function renderOverviewYearChart(mKey){
         const dataPoints = results.map(([reportRows, officialRows])=>{
             const reportByUnit = {}; reportRows.forEach(r=>reportByUnit[r.unitId]=r);
             let s=0,t=0;
-            officialRows.forEach(o=>{ const r = reportByUnit[o.unitId]; if(r){ s+=o.soLuotChinhThuc; t+=r.tongTTHC; } });
+            officialRows.forEach(o=>{ const r = reportByUnit[o.unitId]; if(r){ s+=o.soLuotChinhThuc; t+=(r.tongTTHC||0); } });
             return t>0 ? s/t*100 : 0;
         });
         const ctx = document.getElementById('ov-year-chart');
@@ -1786,6 +1894,15 @@ function saveOfficialV03(){
 // Admin nhập hộ "Tổng số TTHC của đơn vị" cho các tháng đơn vị chưa tự nhập.
 // Dùng merge để không mất soLuot nếu đơn vị đã từng tự báo cáo; nếu sau đó đơn vị
 // tự nhập lại (saveMonthlyReport dùng set() ghi đè toàn bộ) thì số liệu người dùng sẽ đè lên số liệu admin.
+function clearAdminTongTTHC(unitId, mKey){
+    const reportRef = db.collection('reports').doc(unitId+'_'+mKey);
+    return reportRef.get().then(doc=>{
+        if (!doc.exists) return;
+        const del = firebase.firestore.FieldValue.delete();
+        return reportRef.update({ tongTTHC: del, tyLe: del, dat: del,
+            updatedBy: currentUserDoc.username, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+    });
+}
 function saveAdminTongTTHC(unitId, unitName, mKey, tongTTHC){
     const reportRef = db.collection('reports').doc(unitId+'_'+mKey);
     return reportRef.get().then(doc=>{
@@ -1824,6 +1941,27 @@ function handleV03ImportFile(e){
     v03ImportFile = e.target.files[0] || null;
     document.getElementById('v03-import-label').innerText = v03ImportFile ? v03ImportFile.name : 'Nhấn để chọn file Excel đã điền để Import';
 }
+function showImportDoneModal(mKey, count, tthcCount, skipped, cleared){
+    const old = document.getElementById('import-done-modal'); if (old) old.remove();
+    const el = document.createElement('div');
+    el.id = 'import-done-modal';
+    el.className = 'modal-overlay';
+    el.onclick = (ev)=>{ if (ev.target === el) el.remove(); };
+    el.innerHTML = `<div class="modal-box card done-modal">
+        <div class="done-logo"><img src="vneid-logo.png" alt="VNeID"></div>
+        <div class="done-check"><i class="fa-solid fa-check"></i></div>
+        <h3>Import hoàn tất</h3>
+        <div class="done-sub">Đã import dữ liệu vào Hệ thống thành công<br>${monthLabel(mKey)}</div>
+        <div class="done-stats">
+            <div><span>Số đơn vị đã import V03</span><b>${count}</b></div>
+            ${tthcCount ? `<div><span>Đã cập nhật Tổng số TTHC</span><b>${tthcCount}</b></div>` : ''}
+            ${cleared ? `<div><span>Đơn vị để trống V03 (đã đặt "Chưa có")</span><b style="color:#fbbf24;">${cleared}</b></div>` : ''}
+            ${skipped ? `<div><span>Dòng bị bỏ qua (không khớp)</span><b style="color:#fbbf24;">${skipped}</b></div>` : ''}
+        </div>
+        <button class="btn btn-black" onclick="document.getElementById('import-done-modal').remove()">Đóng</button>
+    </div>`;
+    document.body.appendChild(el);
+}
 function runV03Import(){
     triggerHaptic();
     const statusEl = document.getElementById('v03-import-status');
@@ -1838,34 +1976,38 @@ function runV03Import(){
         const codeToUnit = {}; unitCatalog.forEach(u=>codeToUnit[(u.code||'').trim().toLowerCase()]=u);
         showLoading(true);
         const batch = db.batch();
-        let count = 0, skipped = 0;
-        const tthcJobs = [];
+        let count = 0, skipped = 0, cleared = 0;
+        const tthcJobs = [], tthcClearJobs = [];
         rows.slice(1).forEach(r=>{
             const code = (r[0]||'').toString().trim().toLowerCase();
             const name = (r[1]||'').toString().trim().toLowerCase();
             const val = r[2];
             const tongVal = r[3];
-            if (val === '' || val === undefined || val === null) return;
+            if (!code && !name) return;
             const unit = codeToUnit[code] || nameToUnit[name];
             if (!unit){ skipped++; return; }
             const docRef = db.collection('official').doc(unit.id+'_'+mKey);
+            const blank = v => v === '' || v === undefined || v === null;
+            // Ô trống trong file = "Chưa có": xóa số liệu cũ của tháng đang chọn thay vì giữ nguyên.
+            if (blank(tongVal)) tthcClearJobs.push(unit);
+            if (blank(val)){ batch.delete(docRef); cleared++; return; }
             batch.set(docRef, { unitId: unit.id, unitName: unit.name, monthKey: mKey, soLuotChinhThuc: parseInt(val)||0,
                 updatedBy: currentUserDoc.username, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
             count++;
-            // Cột "Tổng số TTHC của đơn vị": để trống thì bỏ qua, hệ thống vẫn cập nhật V03 bình thường.
+            // Cột "Tổng số TTHC của đơn vị": để trống thì xóa Tổng số TTHC cũ (hiện "Chưa có"), V03 vẫn cập nhật bình thường.
             if (!(tongVal === '' || tongVal === undefined || tongVal === null)){
                 const parsedTthc = parseInt(tongVal);
                 if (!isNaN(parsedTthc) && parsedTthc>=0) tthcJobs.push({ unit, tongTTHC: parsedTthc });
             }
         });
         batch.commit().then(()=>{
-            return Promise.all(tthcJobs.map(job=>saveAdminTongTTHC(job.unit.id, job.unit.name, mKey, job.tongTTHC)));
+            return Promise.all(tthcJobs.map(job=>saveAdminTongTTHC(job.unit.id, job.unit.name, mKey, job.tongTTHC))
+                .concat(tthcClearJobs.map(u=>clearAdminTongTTHC(u.id, mKey))));
         }).then(()=>{
             showLoading(false);
-            statusEl.innerText = `Đã import ${count} đơn vị.`
-                + (tthcJobs.length ? ` Đã cập nhật Tổng số TTHC cho ${tthcJobs.length} đơn vị.` : '')
-                + (skipped ? ` Bỏ qua ${skipped} dòng không khớp tên/mã đơn vị.` : '');
+            statusEl.innerText = '';
             renderV03MissingList();
+            showImportDoneModal(mKey, count, tthcJobs.length, skipped, cleared);
         }).catch(err=>{ showLoading(false); statusEl.innerText = 'Lỗi: ' + err.message; });
     };
     reader.readAsBinaryString(v03ImportFile);
@@ -1886,6 +2028,9 @@ function showPhuLucTab(n){
     document.getElementById('pl-tyle-label').innerText = n===2 ? 'Tỷ lệ bình quân của các đơn vị (lượt đánh giá ÷ tổng TTHC)' : 'Tỷ lệ lũy kế bình quân của các đơn vị (lũy kế lượt ÷ lũy kế TTHC)';
     document.getElementById('pl-col1').innerText = n===2 ? 'Lượt đánh giá' : 'Lũy kế lượt';
     document.getElementById('pl-col2').innerText = n===2 ? 'Tổng TTHC' : 'Lũy kế TTHC';
+    const plMonthSel = document.getElementById('pl-month-select'), keepMonth = plMonthSel.value;
+    populateAdminMonths('pl', Number(document.getElementById('pl-year-select').value));
+    plMonthSel.value = keepMonth;
     renderPhuLuc();
 }
 function renderPhuLuc(){
