@@ -378,6 +378,56 @@ table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
       </div>
     </div>
 
+    <!-- THỨ HẠNG -->
+    <div id="user-rank" class="user-sub">
+      <div class="content-pad">
+        <h2 class="page-title">Thứ hạng đơn vị</h2>
+        <div class="card">
+          <div class="subtab-row">
+            <button class="active" id="rk-tab-m" onclick="setRankMode('m')">Theo tháng</button>
+            <button id="rk-tab-c" onclick="setRankMode('c')">Lũy kế</button>
+          </div>
+          <select id="rk-year-select" class="form-control" style="margin-bottom:8px;" onchange="onRankYearChange()"></select>
+          <select id="rk-month-select" class="form-control" style="font-size:11px; margin-bottom:12px;" onchange="loadRank()"></select>
+          <div class="big-metric">
+            <div class="lbl">Thứ hạng của đơn vị</div>
+            <div class="val" id="rk-pos">--</div>
+            <div id="rk-sub" class="note" style="margin-top:4px;"></div>
+          </div>
+          <div class="stat-grid">
+            <div class="stat-box"><div class="n" id="rk-own-tyle">--</div><div class="l">Tỷ lệ của đơn vị</div></div>
+            <div class="stat-box"><div class="n" id="rk-avg">--</div><div class="l">Tỷ lệ bình quân chung</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div style="font-weight:700; font-size:13px; margin-bottom:8px;">Top 10 đơn vị có tỷ lệ cao nhất</div>
+          <div class="chart-wrap" style="height:320px;"><canvas id="rank-chart"></canvas></div>
+          <div class="note">Cột xanh dương là đơn vị của bạn. Xanh lá: đạt (từ 60%), đỏ: chưa đạt.</div>
+        </div>
+        <div class="card">
+          <div style="font-weight:700; font-size:13px; margin-bottom:8px;">Bảng xếp hạng các đơn vị</div>
+          <div class="form-group"><input type="search" id="rk-search" class="form-control" placeholder="Tìm tên đơn vị..." oninput="renderRankRows()"><div class="note" style="margin-top:4px;">Bấm vào tên đơn vị để xem biểu đồ kết quả từng tháng.</div></div>
+          <div class="data-table-wrap">
+            <table class="dt dt-fit"><thead><tr><th style="width:11%;">Hạng</th><th>Tên đơn vị</th><th style="width:15%;">Lượt V03</th><th style="width:15%;">TTHC</th><th style="width:16%;">Tỷ lệ</th></tr></thead>
+            <tbody id="rk-body"></tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- POPUP BIỂU ĐỒ THEO THÁNG CỦA MỘT ĐƠN VỊ (THỨ HẠNG) -->
+    <div id="rk-unit-modal" class="modal-overlay" style="display:none;" onclick="if(event.target===this) closeRankUnit()">
+      <div class="modal-box card">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:4px;">
+          <h2 id="rk-unit-title" style="margin:0; font-size:14px; line-height:1.35;"></h2>
+          <button onclick="closeRankUnit()" style="background:none; border:none; color:var(--text-main); font-size:18px; cursor:pointer; padding:0 2px;"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="note" id="rk-unit-sub" style="margin-bottom:8px;"></div>
+        <div style="position:relative; height:230px;"><canvas id="rk-unit-chart"></canvas></div>
+        <div class="note" style="margin-top:8px; font-size:11px;">Cột xanh: đạt (từ 60%) · Cột đỏ: chưa đạt · Cột xám: chưa đủ số liệu V03 hoặc Tổng TTHC. Tỷ lệ = lượt đánh giá V03 ÷ Tổng TTHC.</div>
+      </div>
+    </div>
+
     <!-- TÀI KHOẢN -->
     <div id="user-account" class="user-sub">
       <div class="content-pad">
@@ -466,6 +516,7 @@ table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
       <button class="nav-btn" id="unav-home" onclick="showUserSub('home')"><i class="fa-solid fa-house"></i>Trang chủ</button>
       <button class="nav-btn" id="unav-input" onclick="showUserSub('input')"><i class="fa-solid fa-pen-to-square"></i>Nhập liệu</button>
       <button class="nav-btn" id="unav-cumulative" onclick="showUserSub('cumulative')"><i class="fa-solid fa-chart-column"></i>Lũy kế</button>
+      <button class="nav-btn" id="unav-rank" onclick="showUserSub('rank')"><i class="fa-solid fa-ranking-star"></i>Thứ hạng</button>
       <button class="nav-btn" id="unav-account" onclick="showUserSub('account')"><i class="fa-solid fa-user"></i>Tài khoản</button>
     </div>
   </div>
@@ -534,6 +585,38 @@ table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
         <div style="max-height:62vh; overflow-y:auto;">
           <table class="dt dt-fit"><thead id="ov-list-head"></thead><tbody id="ov-list-body"></tbody></table>
         </div>
+      </div>
+    </div>
+
+    <!-- POPUP GỬI EMAIL NHẮC HẠN -->
+    <div id="reminder-picker-modal" class="modal-overlay" style="display:none;" onclick="if(event.target===this) closeReminderPicker()">
+      <div class="modal-box card" style="max-width:400px; padding:12px; max-height:92vh; overflow-y:auto;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:4px;">
+          <h2 style="margin:0; font-size:14px; line-height:1.35;">Gửi email nhắc hạn</h2>
+          <button onclick="closeReminderPicker()" style="background:none; border:none; color:var(--text-main); font-size:18px; cursor:pointer; padding:0 2px;"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="note" id="rp-sub" style="margin-bottom:8px;"></div>
+        <div class="form-group">
+          <label>Nội dung nhắc</label>
+          <textarea id="rp-message" class="form-control" rows="4" oninput="reminderPicker.msgEdited=true"></textarea>
+          <div class="note">Dùng {don_vi} để tự chèn tên từng đơn vị.</div>
+          <button class="btn btn-outline" style="padding:9px; font-size:13px; margin-top:6px;" onclick="saveReminderTemplate()"><i class="fa-solid fa-floppy-disk"></i> Lưu làm nội dung mặc định</button>
+          <div class="note" id="rp-save-note"></div>
+        </div>
+        <input type="text" id="rp-search" class="form-control" placeholder="Tìm đơn vị theo tên hoặc email..." oninput="filterReminderList()" style="margin-bottom:8px;">
+        <label style="display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:600; cursor:pointer; margin-bottom:4px;"><input type="checkbox" id="rp-select-all" onchange="toggleReminderPickerAll(this.checked)"> Chọn tất cả (<span id="rp-selected-count">0</span>)</label>
+        <div id="rp-list" style="max-height:30vh; overflow-y:auto; margin-bottom:8px;"></div>
+        <div class="form-group">
+          <label>Hình thức gửi</label>
+          <select id="rp-option" class="form-control" onchange="onReminderOptionChange()">
+            <option value="selected">Gửi các đơn vị đã lựa chọn</option>
+            <option value="withmail">Gửi tất cả các đơn vị đã có mail</option>
+            <option value="pending">Gửi các đơn vị chưa nhập số liệu (đã có mail)</option>
+          </select>
+          <div class="note" id="rp-summary"></div>
+        </div>
+        <button class="btn btn-primary" id="rp-send-btn" onclick="sendPickedReminders()"><i class="fa-solid fa-paper-plane"></i> Gửi tin nhắn email</button>
+        <div id="rp-status" class="note" style="margin-top:8px;"></div>
       </div>
     </div>
 
@@ -686,17 +769,14 @@ table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
       <div class="content-pad">
         <h2 class="page-title">Cài đặt hệ thống</h2>
         <div class="card">
-          <h2>Cấu hình nhắc hạn báo cáo</h2>
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <div>
-              <div style="font-weight:600; font-size:13.5px;">Bật nhắc hạn qua email</div>
-              <div class="note">Áp dụng cho toàn bộ 129 đơn vị</div>
-            </div>
-            <label class="toggle-switch"><input type="checkbox" id="cfg-notice-enabled" onchange="saveNoticeConfig()"><span class="toggle-slider"></span></label>
-          </div>
-        </div>
-        <div class="card">
           <h2>Thông báo hiển thị khi đăng nhập</h2>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <div>
+              <div style="font-weight:600; font-size:13.5px;">Bật thông báo</div>
+              <div class="note">Hiện cho đơn vị mỗi lần đăng nhập</div>
+            </div>
+            <label class="toggle-switch"><input type="checkbox" id="cfg-notice-enabled"><span class="toggle-slider"></span></label>
+          </div>
           <div class="form-group">
             <label>Nội dung thông báo</label>
             <textarea id="cfg-notice-content" class="form-control" rows="3" placeholder="Nội dung hiển thị cho đơn vị khi đăng nhập..."></textarea>
@@ -705,14 +785,17 @@ table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
         </div>
         <div class="card">
           <h2>Gửi email nhắc hạn (thủ công)</h2>
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px;">
+            <div style="font-weight:600; font-size:13.5px;">Cấu hình API email (<span id="email-cfg-status">...</span>)</div>
+            <label class="toggle-switch"><input type="checkbox" id="email-cfg-toggle" onchange="toggleEmailCfgFields(this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+          <div id="email-cfg-fields" style="display:none;">
           <div class="form-group"><label>EmailJS Public Key</label><input type="text" id="cfg-emailjs-public" class="form-control"></div>
           <div class="form-group"><label>EmailJS Service ID</label><input type="text" id="cfg-emailjs-service" class="form-control"></div>
           <div class="form-group"><label>EmailJS Template ID</label><input type="text" id="cfg-emailjs-template" class="form-control"></div>
           <button class="btn btn-outline" onclick="saveEmailConfig()" style="margin-bottom:12px;">Lưu cấu hình Email</button>
-          <div class="btn-row">
-            <button class="btn btn-primary" onclick="sendReminderEmails('all')">Gửi tất cả</button>
-            <button class="btn btn-black" onclick="sendReminderEmails('pending')">Gửi đơn vị quá hạn</button>
           </div>
+          <button class="btn btn-primary" onclick="openReminderPicker()"><i class="fa-solid fa-envelope"></i> Gửi email nhắc hạn</button>
           <div id="email-send-status" class="note" style="margin-top:8px;"></div>
         </div>
         <div class="card">
@@ -1053,13 +1136,14 @@ function nextMonthKey(key){ let [y,m]=key.split("-").map(Number); m++; if(m>12){
 function showUserSub(name){
     document.querySelectorAll('.user-sub').forEach(s=>s.classList.remove('active'));
     document.getElementById('user-'+name).classList.add('active');
-    ['home','input','cumulative','account'].forEach(n=>{
+    ['home','input','cumulative','rank','account'].forEach(n=>{
         const btn = document.getElementById('unav-'+n);
         if (btn) btn.classList.toggle('active', n===name);
     });
     if (name==='home') loadUserHome();
     if (name==='input') { populateInputMonthSelect(); loadInputForMonth(); }
     if (name==='cumulative') loadUserFiscalTab();
+    if (name==='rank') initRankTab();
     if (name==='account') loadAccountInfo();
     if (name==='reminder') loadReminderScreen();
 }
@@ -1364,6 +1448,194 @@ function loadUserFiscalTab(){
         customAlert('Không tải được dữ liệu lũy kế: ' + err.message, 'error');
     });
 }
+// ===================== THỨ HẠNG (người dùng) =====================
+// Xếp hạng theo tỷ lệ chính thức V03 (lượt V03 ÷ tổng TTHC), cùng cách tính với Phụ lục 2/3 của quản trị.
+// Chỉ đơn vị đã có đủ số liệu mới được xếp hạng; đồng hạng khi tỷ lệ bằng nhau (1, 2, 2, 4...).
+let rankMode = 'm', rankRows = [], rankOwnId = null, rankChartInstance = null;
+function setRankMode(m){
+    rankMode = m;
+    document.getElementById('rk-tab-m').classList.toggle('active', m==='m');
+    document.getElementById('rk-tab-c').classList.toggle('active', m==='c');
+    const sel = document.getElementById('rk-month-select'), keep = sel.value;
+    fillRankMonths(Number(document.getElementById('rk-year-select').value));
+    if (keep && Array.from(sel.options).some(o=>o.value===keep)) sel.value = keep;
+    loadRank();
+}
+function fillRankMonths(evalYear){
+    const { startKey, endKey } = fiscalYearRange(monthKey(evalYear, 9));
+    const curKey = currentReportingMonthKey();
+    let k = endKey < curKey ? endKey : curKey;
+    const opts = [];
+    while (k >= startKey){
+        opts.push(`<option value="${k}">${rankMode==='c' ? 'Tính đến ' + monthLabel(k) + ' (' + cumulativePeriodShort(k) + ')' : monthLabel(k) + ' (' + reportingPeriodShort(k) + ')'}</option>`);
+        k = prevMonthKey(k);
+    }
+    document.getElementById('rk-month-select').innerHTML = opts.join('');
+}
+function onRankYearChange(){
+    fillRankMonths(Number(document.getElementById('rk-year-select').value));
+    loadRank();
+}
+function initRankTab(){
+    const yearSel = document.getElementById('rk-year-select');
+    if (!yearSel.options.length){
+        const curYear = fiscalYearRange(currentReportingMonthKey()).evalYear;
+        let html = '';
+        for (let i=0; i<=ADMIN_EVAL_YEARS_BACK; i++) html += `<option value="${curYear-i}">${adminEvalYearLabel(curYear-i)}</option>`;
+        yearSel.innerHTML = html;
+        yearSel.value = curYear;
+        fillRankMonths(curYear);
+    }
+    loadRank();
+}
+function loadRank(){
+    const mKey = document.getElementById('rk-month-select').value;
+    if (!mKey) return;
+    rankOwnId = currentUserDoc.unitId || currentUserDoc.username;
+    showLoading(true);
+    const build = (repOf, offOf) => unitCatalog.map(u=>{
+        const col2 = repOf(u.id), col1 = offOf(u.id);
+        const tyLe = (typeof col1 !== 'undefined' && typeof col2 !== 'undefined') ? (col2>0 ? col1/col2*100 : 0) : undefined;
+        return { unit:u, col1, col2, tyLe };
+    });
+    const dataPromise = rankMode === 'm'
+        ? Promise.all([getReportsForMonth(mKey), getOfficialForMonth(mKey)]).then(([reportRows, officialRows])=>{
+            const rep = {}; reportRows.forEach(r=>rep[r.unitId]=r.tongTTHC);
+            const off = {}; officialRows.forEach(r=>off[r.unitId]=r.soLuotChinhThuc);
+            return build(id=>rep[id], id=>off[id]);
+        })
+        : Promise.all([getReportsCumulative(mKey), getOfficialCumulative(mKey)]).then(([repMap, offMap])=>
+            build(id=>repMap[id] ? repMap[id].tongTTHC : undefined, id=>offMap[id]));
+    dataPromise.then(rows=>{
+        showLoading(false);
+        const ranked = rows.filter(r=>typeof r.tyLe !== 'undefined').sort((a,b)=>b.tyLe-a.tyLe || a.unit.name.localeCompare(b.unit.name,'vi'));
+        ranked.forEach(r=>{ r.rank = 1 + ranked.filter(x=>x.tyLe > r.tyLe).length; });
+        const rest = rows.filter(r=>typeof r.tyLe === 'undefined').sort((a,b)=>a.unit.name.localeCompare(b.unit.name,'vi'));
+        rankRows = ranked.concat(rest);
+        renderRankSummary(ranked, rows.length);
+        renderRankChart(ranked);
+        renderRankRows();
+    }).catch(err=>{
+        showLoading(false);
+        console.error('[loadRank] Lỗi khi tải dữ liệu:', err);
+        customAlert('Không tải được bảng xếp hạng: ' + err.message, 'error');
+    });
+}
+function renderRankSummary(ranked, total){
+    const own = rankRows.find(r=>r.unit.id===rankOwnId);
+    const avg = ranked.length ? ranked.reduce((s,r)=>s+r.tyLe,0)/ranked.length : null;
+    document.getElementById('rk-avg').innerText = avg===null ? '--' : fmtPct(avg);
+    if (own && typeof own.rank !== 'undefined'){
+        document.getElementById('rk-pos').innerText = own.rank + ' / ' + ranked.length;
+        document.getElementById('rk-own-tyle').innerText = fmtPct(own.tyLe);
+        document.getElementById('rk-sub').innerHTML = badgeHtml(own.tyLe>=60) + `<div style="margin-top:6px;">Xếp trên ${ranked.length - own.rank} đơn vị đã có số liệu (tổng ${total} đơn vị)</div>`;
+    } else {
+        document.getElementById('rk-pos').innerText = '--';
+        document.getElementById('rk-own-tyle').innerText = '--';
+        document.getElementById('rk-sub').innerHTML = '<span class="badge badge-amber">Đơn vị chưa đủ số liệu để xếp hạng</span>';
+    }
+}
+function renderRankChart(ranked){
+    try {
+    if (typeof Chart === 'undefined') return;
+    const canvasEl = document.getElementById('rank-chart');
+    if (!canvasEl) return;
+    const items = ranked.slice(0,10);
+    const own = ranked.find(r=>r.unit.id===rankOwnId);
+    if (own && !items.includes(own)) items.push(own);
+    const short = n => n.length>28 ? n.slice(0,27)+'…' : n;
+    const labels = items.map(r=>r.rank + '. ' + short(r.unit.name));
+    const colors = items.map(r=> r.unit.id===rankOwnId ? '#38bdf8' : (r.tyLe>=60 ? '#22c55e' : '#f87171'));
+    if (rankChartInstance){ rankChartInstance.destroy(); rankChartInstance = null; }
+    rankChartInstance = new Chart(canvasEl, {
+        type: 'bar',
+        data: { labels, datasets: [{ data: items.map(r=>r.tyLe), backgroundColor: colors, borderRadius: 5, maxBarThickness: 22 }] },
+        options: {
+            indexAxis: 'y',
+            layout: { padding: { right: 38 } },
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: item=> item.formattedValue+'%' } },
+                datalabels: { display: true, anchor: 'end', align: 'end', offset: 2, color: '#e6f1ff', font: { weight: '700', size: 10 }, formatter: v=>v.toFixed(1)+'%' }
+            },
+            scales: {
+                x: { min: 0, max: 100, ticks: { callback: v=>v+'%', font:{size:10} }, grid:{ color:'rgba(148,163,184,0.15)' } },
+                y: { ticks: { font:{size:9.5} }, grid:{ display:false } }
+            },
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+    } catch(err){ console.error('[rank-chart] Lỗi vẽ biểu đồ:', err); }
+}
+function renderRankRows(){
+    const q = normVi(document.getElementById('rk-search').value.trim());
+    const na = '<span style="color:var(--text-muted); font-style:italic;">Chưa có</span>';
+    const rows = rankRows.filter(r=>!q || normVi(r.unit.name).includes(q));
+    document.getElementById('rk-body').innerHTML = rows.length ? rows.map(r=>{
+        const isOwn = r.unit.id===rankOwnId;
+        const hasRank = typeof r.rank !== 'undefined';
+        return `<tr${isOwn ? ' style="background:var(--blue-bg); font-weight:700;"' : ''}><td>${hasRank ? r.rank : '-'}</td><td class="unit-name unit-link" onclick="openRankUnit('${r.unit.id}')">${r.unit.name}${isOwn ? ' <span class="badge" style="background:var(--blue-bg); color:var(--blue-text);">Đơn vị bạn</span>' : ''}</td><td>${typeof r.col1 !== 'undefined' ? fmtInt(r.col1) : na}</td><td>${typeof r.col2 !== 'undefined' ? fmtInt(r.col2) : na}</td><td>${hasRank ? fmtPct(r.tyLe) : '<span style="color:var(--text-muted); font-style:italic;">Chưa đủ</span>'}</td></tr>`;
+    }).join('') : '<tr><td colspan="5" style="color:var(--text-muted); font-style:italic;">Không tìm thấy đơn vị phù hợp</td></tr>';
+}
+// Popup kết quả theo tháng của một đơn vị trong năm đánh giá đang chọn
+let rankUnitChart = null;
+function openRankUnit(unitId){
+    const row = rankRows.find(r=>r.unit.id===unitId); if (!row) return;
+    const evalYear = Number(document.getElementById('rk-year-select').value);
+    showLoading(true);
+    Promise.all([
+        db.collection('reports').where('unitId','==',unitId).get(),
+        db.collection('official').where('unitId','==',unitId).get()
+    ]).then(([repSnap, offSnap])=>{
+        showLoading(false);
+        const reportRows = []; repSnap.forEach(d=>reportRows.push(d.data()));
+        const officialRows = []; offSnap.forEach(d=>officialRows.push(d.data()));
+        const months = buildUnitMonthly(evalYear, reportRows, officialRows);
+        document.getElementById('rk-unit-title').innerText = row.unit.name;
+        document.getElementById('rk-unit-sub').innerText = 'Tỷ lệ đạt theo tháng · ' + evalYearLabel(evalYear);
+        document.getElementById('rk-unit-modal').style.display = '';
+        if (typeof Chart === 'undefined') return;
+        const has = months.map(m=>typeof m.tyLe !== 'undefined');
+        const values = months.map((m,i)=> has[i] ? m.tyLe : 0);
+        const colors = months.map((m,i)=> !has[i] ? 'rgba(148,163,184,0.35)' : (m.tyLe>=60 ? '#22c55e' : '#f87171'));
+        const yMax = Math.max(100, Math.ceil(Math.max(...values)/20)*20);
+        if (rankUnitChart){ rankUnitChart.destroy(); rankUnitChart = null; }
+        rankUnitChart = new Chart(document.getElementById('rk-unit-chart'), {
+            type: 'bar',
+            data: {
+                labels: months.map(m=>monthLabel(m.key).replace('Tháng ','T')),
+                datasets: [
+                    { data: values, backgroundColor: colors, borderRadius: 5, maxBarThickness: 26 },
+                    { type:'line', data: months.map(()=>60), borderColor:'#facc15', borderDash:[5,4], borderWidth:1.5, pointRadius:0, datalabels:{ display:false } }
+                ]
+            },
+            options: {
+                layout: { padding: { top: 18 } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: (item)=>{
+                        if (item.datasetIndex === 1) return 'Chỉ tiêu 60%';
+                        const m = months[item.dataIndex];
+                        return has[item.dataIndex] ? `${fmtPct(m.tyLe)} (${fmtInt(m.off)} lượt / ${fmtInt(m.tthc)} TTHC)` : 'Chưa đủ số liệu';
+                    } } },
+                    datalabels: { display: (ctx)=> ctx.datasetIndex === 0, anchor:'end', align:'end', offset:1,
+                        color: (ctx)=> has[ctx.dataIndex] ? '#e6f1ff' : '#94a3b8', font:{ weight:'700', size:8.5 },
+                        formatter: (v, ctx)=> has[ctx.dataIndex] ? v.toFixed(1)+'%' : '–' }
+                },
+                scales: {
+                    y: { min:0, max:yMax, ticks:{ callback:v=>v+'%', font:{size:10} }, grid:{ color:'rgba(148,163,184,0.15)' } },
+                    x: { ticks:{ font:{size:10} }, grid:{ display:false } }
+                },
+                responsive: true, maintainAspectRatio: false
+            }
+        });
+    }).catch(err=>{ showLoading(false); customAlert('Không tải được dữ liệu đơn vị: ' + err.message, 'error'); });
+}
+function closeRankUnit(){
+    document.getElementById('rk-unit-modal').style.display = 'none';
+    if (rankUnitChart){ rankUnitChart.destroy(); rankUnitChart = null; }
+}
 let inputReported = new Set();
 // Tháng báo cáo vừa chốt số liệu gần nhất (kỳ số liệu 15/(M-1) – 14/M) và mức cảnh báo theo ngày hôm nay
 function inputDeadlineInfo(){
@@ -1516,17 +1788,20 @@ function saveReminderEmail(){
     db.collection('users').doc(currentUserDoc.username).update({ email }).then(()=>{
         currentUserDoc.email = email;
         showLoading(false); customAlert('Đã lưu email nhận thông báo.');
+    }).catch(err=>{
+        showLoading(false);
+        console.error('[saveReminderEmail]', err);
+        customAlert('Không lưu được email: ' + (err.code ? err.code + ' - ' : '') + err.message, 'error');
     });
 }
 function loadReminderScreen(){
     const unitId = currentUserDoc.unitId || currentUserDoc.username;
-    db.collection('reminderLogs').orderBy('sentAt','desc').limit(20).get().then(snap=>{
-        const list = document.getElementById('reminder-history-list');
+    const list = document.getElementById('reminder-history-list');
+    db.collection('reminderLogs').where('recipientUnitIds','array-contains',unitId).limit(50).get().then(snap=>{
         const rows = [];
-        snap.forEach(d=>{
-            const r = d.data();
-            if (!r.recipientUnitIds || r.recipientUnitIds.includes(unitId)) rows.push(r);
-        });
+        snap.forEach(d=>rows.push(d.data()));
+        const ts = r => (r.sentAt && r.sentAt.toMillis) ? r.sentAt.toMillis() : 0;
+        rows.sort((a,b)=>ts(b)-ts(a));
         list.innerHTML = rows.slice(0,10).map(r=>{
             const isOverdue = r.mode === 'pending';
             return `<div class="list-row">
@@ -1534,6 +1809,9 @@ function loadReminderScreen(){
                 <i class="fa-solid ${isOverdue ? 'fa-triangle-exclamation' : 'fa-envelope'}" style="color:${isOverdue?'var(--red-text)':'var(--text-muted)'};"></i>
             </div>`;
         }).join('') || '<div class="note">Chưa có lịch sử nhắc hạn.</div>';
+    }).catch(err=>{
+        console.error('[loadReminderScreen]', err);
+        list.innerHTML = '<div class="note">Không tải được lịch sử: ' + (err.code || err.message) + '</div>';
     });
 }
 function checkLoginNotice(){
@@ -1583,7 +1861,7 @@ function populateAdminMonths(name, evalYear){
     const curKey = currentReportingMonthKey();
     let k = endKey < curKey ? endKey : curKey;
     const opts = [];
-    while (k >= startKey){ opts.push(`<option value="${k}">${monthLabel(k)} (${name==='pl' && currentPlTab===3 ? cumulativePeriodShort(k) : reportingPeriodShort(k)})</option>`); k = prevMonthKey(k); }
+    while (k >= startKey){ opts.push(`<option value="${k}">${name==='pl' && currentPlTab===3 ? 'Tính đến ' + monthLabel(k) + ' (' + cumulativePeriodShort(k) + ')' : monthLabel(k) + ' (' + reportingPeriodShort(k) + ')'}</option>`); k = prevMonthKey(k); }
     document.getElementById(ADMIN_PERIOD_TABS[name].month).innerHTML = opts.join('');
 }
 function setupAdminPeriod(name){
@@ -2322,6 +2600,7 @@ function loadAdminConfig(){
         document.getElementById('cfg-emailjs-public').value = d.emailjsPublicKey || '';
         document.getElementById('cfg-emailjs-service').value = d.emailjsServiceId || '';
         document.getElementById('cfg-emailjs-template').value = d.emailjsTemplateId || '';
+        updateEmailCfgStatus(d.emailjsPublicKey, d.emailjsServiceId, d.emailjsTemplateId);
     });
     db.collection('users').where('role','==','unit').get().then(snap=>{
         document.getElementById('cfg-acc-count').innerText = snap.size;
@@ -2333,7 +2612,7 @@ function saveNoticeConfig(){
     const content = document.getElementById('cfg-notice-content').value.trim();
     showLoading(true);
     db.collection('config').doc('app').set({ noticeEnabled: enabled, noticeContent: content }, { merge:true }).then(()=>{
-        showLoading(false); customAlert('Đã lưu cấu hình nhắc hạn / thông báo.');
+        showLoading(false); customAlert(enabled ? 'Đã lưu. Thông báo sẽ hiện khi đơn vị đăng nhập.' : 'Đã lưu. Thông báo đang TẮT nên đơn vị sẽ không thấy.');
     });
 }
 function saveEmailConfig(){
@@ -2344,55 +2623,169 @@ function saveEmailConfig(){
     showLoading(true);
     db.collection('config').doc('app').set({ emailjsPublicKey: pub, emailjsServiceId: svc, emailjsTemplateId: tpl }, { merge:true }).then(()=>{
         showLoading(false); customAlert('Đã lưu cấu hình Email.');
+        updateEmailCfgStatus(pub, svc, tpl);
+        toggleEmailCfgFields(false);
     });
 }
-function sendReminderEmails(mode){
-    triggerHaptic();
-    const statusEl = document.getElementById('email-send-status');
-    showLoading(true);
-    Promise.all([
-        db.collection('config').doc('app').get(),
-        db.collection('users').where('role','==','unit').get(),
-        getReportsForMonth(currentMonthKey())
-    ]).then(([cfgDoc, usersSnap, reportRows])=>{
-        const cfg = cfgDoc.exists ? cfgDoc.data() : {};
-        if (!cfg.emailjsPublicKey || !cfg.emailjsServiceId || !cfg.emailjsTemplateId){
-            showLoading(false); customAlert('Vui lòng cấu hình EmailJS trước!', 'error'); return;
-        }
-        emailjs.init(cfg.emailjsPublicKey);
-        const submittedIds = new Set(reportRows.map(r=>r.unitId));
-        const targets = [];
-        usersSnap.forEach(doc=>{
-            const u = doc.data();
-            if (!u.email) return;
-            const hasSubmitted = submittedIds.has(u.unitId || u.username);
-            if (mode==='all' || (mode==='pending' && !hasSubmitted)) targets.push(u);
-        });
-        showLoading(false);
-        if (!targets.length){ statusEl.innerText = 'Không có đơn vị nào cần gửi.'; return; }
-        statusEl.innerText = `Đang gửi email đến ${targets.length} đơn vị...`;
-        let sent=0, failed=0;
-        const sendNext = (i)=>{
-            if (i>=targets.length){
-                statusEl.innerText = `Hoàn tất: ${sent} email đã gửi, ${failed} lỗi.`;
-                logReminderSent(mode, targets.map(t=>t.unitId||t.username));
-                return;
-            }
-            const t = targets[i];
-            emailjs.send(cfg.emailjsServiceId, cfg.emailjsTemplateId, {
-                to_email: t.email, unit_name: t.unitName,
-                message: `Đề nghị đơn vị ${t.unitName} khẩn trương nhập số liệu khảo sát VNeID tháng ${monthLabel(currentMonthKey())} trước ngày ${DEADLINE_DAY} hằng tháng.`
-            }).then(()=>sent++).catch(()=>failed++).finally(()=>sendNext(i+1));
-        };
-        sendNext(0);
-    });
+function updateEmailCfgStatus(pub, svc, tpl){
+    const ok = !!(pub && svc && tpl), el = document.getElementById('email-cfg-status');
+    el.innerText = ok ? 'Đã cấu hình' : 'Chưa cấu hình';
+    el.style.color = ok ? 'var(--green-text)' : 'var(--red-text)';
 }
-function logReminderSent(mode, recipientUnitIds){
+function toggleEmailCfgFields(show){
+    document.getElementById('email-cfg-fields').style.display = show ? 'block' : 'none';
+    document.getElementById('email-cfg-toggle').checked = show;
+}
+function logReminderSent(mode, recipientUnitIds, mKey){
     db.collection('reminderLogs').add({
-        mode, monthKey: currentMonthKey(), recipientUnitIds,
+        mode, monthKey: mKey || currentMonthKey(), recipientUnitIds,
         sentAtLabel: new Date().toLocaleDateString('vi-VN'),
         sentAt: firebase.firestore.FieldValue.serverTimestamp(),
         sentBy: currentUserDoc.username
+    });
+}
+
+// ===== Gửi email nhắc hạn: popup nội dung + danh sách đơn vị + hình thức gửi =====
+let reminderPicker = { key:'', level:'', rows:[], msgEdited:false, templates:{}, pendingKind:false };
+function rpNorm(t){ return (t||'').toLowerCase().replace(/đ/g,'d').normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+function rpKind(pending){ return pending ? reminderPicker.level : 'general'; }
+function rpBuiltin(kind){
+    const { key } = reminderPicker;
+    const [ky,km] = key.split('-').map(Number), han = `${DEADLINE_DAY}/${km}/${ky}`, ml = monthLabel(key);
+    if (kind==='general') return `Đề nghị đơn vị {don_vi} khẩn trương nhập số liệu khảo sát VNeID ${ml} trước ngày ${DEADLINE_DAY} hằng tháng.`;
+    return kind==='chot' ? `Hôm nay là ngày chốt số liệu khảo sát VNeID ${ml}. Đề nghị đơn vị {don_vi} nhập số liệu chậm nhất ngày ${han}.`
+         : kind==='han'  ? `Đơn vị {don_vi} đã đến hạn báo cáo số liệu khảo sát VNeID ${ml}, đề nghị khẩn trương hoàn thành chậm nhất trong ngày ${han}.`
+         :                 `Đơn vị {don_vi} đã quá hạn báo cáo số liệu khảo sát VNeID ${ml} (hạn chậm nhất ngày ${han}), đề nghị hoàn thành ngay.`;
+}
+function rpDefaultMessage(pending){ const k = rpKind(pending); return reminderPicker.templates[k] || rpBuiltin(k); }
+function rpUpdateSaveNote(){
+    const names = { chot:'sắp hết hạn', han:'đến hạn', qua:'quá hạn' };
+    document.getElementById('rp-save-note').innerText = 'Lưu cho: ' + (reminderPicker.pendingKind ? `nhắc đơn vị chưa nhập số liệu (${names[reminderPicker.level]})` : 'nhắc chung');
+}
+function openReminderPicker(){
+    triggerHaptic();
+    const { key, level } = inputDeadlineInfo();
+    showLoading(true);
+    Promise.all([db.collection('users').where('role','==','unit').get(), getReportsForMonth(key), db.collection('config').doc('app').get()]).then(([usersSnap, reportRows, cfgDoc])=>{
+        showLoading(false);
+        const done = new Set(reportRows.filter(isReportDone).map(r=>r.unitId));
+        const rows = [];
+        usersSnap.forEach(doc=>{
+            const u = doc.data(), id = u.unitId || u.username;
+            rows.push({ id, name:u.unitName||id, email:u.email||'', done:done.has(id) });
+        });
+        rows.sort((a,b)=>a.name.localeCompare(b.name));
+        const templates = (cfgDoc.exists && cfgDoc.data().reminderTemplates) || {};
+        reminderPicker = { key, level, rows, msgEdited:false, templates, pendingKind:false };
+        const pendBadge = level==='qua' ? '<span class="badge badge-red">Quá hạn</span>' : '<span class="badge badge-amber">'+(level==='chot'?'Sắp hết hạn':'Đến hạn')+'</span>';
+        const nMail = rows.filter(r=>r.email).length, nChua = rows.filter(r=>!r.done).length;
+        document.getElementById('rp-sub').innerText = `${monthLabel(key)} · ${nMail}/${rows.length} đơn vị đã nhập email · ${nChua} đơn vị chưa nhập đủ số liệu`;
+        document.getElementById('rp-list').innerHTML = rows.map((r,i)=>`
+            <div class="list-row rp-row" data-s="${rpNorm(r.name+' '+r.email)}">
+                <label style="display:flex; align-items:center; gap:10px; flex:1; min-width:0; cursor:${r.email?'pointer':'not-allowed'};">
+                    <input type="checkbox" class="rp-check" value="${i}" ${r.email?'':'disabled'} onchange="onReminderManualTick()">
+                    <div><div class="title">${r.name}</div><div class="sub">${r.email ? '<i class="fa-solid fa-envelope" style="color:var(--green-text);"></i> '+r.email : '<span style="color:var(--red-text); font-weight:600;"><i class="fa-solid fa-circle-exclamation"></i> Chưa nhập email</span>'}</div></div>
+                </label>${r.done ? '' : pendBadge}
+            </div>`).join('') || '<div class="note">Chưa có đơn vị nào.</div>';
+        document.getElementById('rp-search').value = '';
+        document.getElementById('rp-option').value = 'selected';
+        document.getElementById('rp-message').value = rpDefaultMessage(false);
+        document.getElementById('rp-status').innerText = '';
+        document.getElementById('rp-send-btn').disabled = false;
+        rpUpdateSaveNote();
+        updateReminderPickerCount();
+        document.getElementById('reminder-picker-modal').style.display = 'flex';
+    }).catch(err=>{ showLoading(false); customAlert('Không tải được danh sách: '+err.message, 'error'); });
+}
+function closeReminderPicker(){ document.getElementById('reminder-picker-modal').style.display = 'none'; }
+function filterReminderList(){
+    const q = rpNorm(document.getElementById('rp-search').value.trim());
+    document.querySelectorAll('.rp-row').forEach(r=>{ r.style.display = (!q || r.dataset.s.includes(q)) ? '' : 'none'; });
+    updateReminderPickerCount();
+}
+function rpTargets(){
+    return [...document.querySelectorAll('.rp-check:checked')].map(c=>reminderPicker.rows[+c.value]);
+}
+// Chọn hình thức gửi -> tự tích các đơn vị tương ứng và đổi nội dung mặc định (nếu chưa sửa tay)
+function onReminderOptionChange(){
+    const opt = document.getElementById('rp-option').value;
+    reminderPicker.pendingKind = (opt==='pending');
+    if (opt!=='selected'){
+        document.querySelectorAll('.rp-check').forEach(c=>{
+            const r = reminderPicker.rows[+c.value];
+            c.checked = !c.disabled && (opt==='withmail' || !r.done);
+        });
+    }
+    if (!reminderPicker.msgEdited) document.getElementById('rp-message').value = rpDefaultMessage(reminderPicker.pendingKind);
+    rpUpdateSaveNote();
+    updateReminderPickerCount();
+}
+// Người dùng tự tích/bỏ tích -> chuyển về "đã lựa chọn" (giữ nguyên nội dung)
+function onReminderManualTick(){
+    document.getElementById('rp-option').value = 'selected';
+    updateReminderPickerCount();
+}
+function toggleReminderPickerAll(checked){
+    document.querySelectorAll('.rp-row').forEach(r=>{
+        if (r.style.display==='none') return;
+        const c = r.querySelector('.rp-check'); if (c && !c.disabled) c.checked = checked;
+    });
+    document.getElementById('rp-option').value = 'selected';
+    updateReminderPickerCount();
+}
+function updateReminderPickerCount(){
+    const visible = [...document.querySelectorAll('.rp-row')].filter(r=>r.style.display!=='none').map(r=>r.querySelector('.rp-check')).filter(c=>c && !c.disabled);
+    const n = document.querySelectorAll('.rp-check:checked').length;
+    document.getElementById('rp-selected-count').innerText = n;
+    document.getElementById('rp-select-all').checked = visible.length > 0 && visible.every(c=>c.checked);
+    const pendingNone = document.getElementById('rp-option').value==='pending' && n===0;
+    document.getElementById('rp-summary').innerText = `Sẽ gửi tới ${n} đơn vị.` + (pendingNone ? ' Không có đơn vị nào chưa nhập số liệu (đã có mail).' : '');
+}
+function saveReminderTemplate(){
+    triggerHaptic();
+    const text = document.getElementById('rp-message').value.trim();
+    if (!text){ customAlert('Nội dung đang trống.', 'error'); return; }
+    const k = rpKind(reminderPicker.pendingKind);
+    showLoading(true);
+    db.collection('config').doc('app').set({ reminderTemplates:{ [k]: text } }, { merge:true }).then(()=>{
+        reminderPicker.templates[k] = text; reminderPicker.msgEdited = false;
+        showLoading(false); customAlert('Đã lưu nội dung mặc định.');
+    }).catch(err=>{ showLoading(false); customAlert('Không lưu được: ' + (err.code || err.message), 'error'); });
+}
+function sendPickedReminders(){
+    triggerHaptic();
+    const targets = rpTargets();
+    const tpl = document.getElementById('rp-message').value.trim();
+    const mode = reminderPicker.pendingKind ? 'pending' : 'all';
+    if (!targets.length){ customAlert('Chưa chọn đơn vị nào để gửi.', 'error'); return; }
+    if (!tpl){ customAlert('Vui lòng nhập nội dung nhắc.', 'error'); return; }
+    if (!confirm(`Gửi email nhắc hạn tới ${targets.length} đơn vị?`)) return;
+    const statusEl = document.getElementById('rp-status'), btn = document.getElementById('rp-send-btn');
+    db.collection('config').doc('app').get().then(cfgDoc=>{
+        const cfg = cfgDoc.exists ? cfgDoc.data() : {};
+        if (!cfg.emailjsPublicKey || !cfg.emailjsServiceId || !cfg.emailjsTemplateId){
+            customAlert('Vui lòng cấu hình EmailJS trước!', 'error'); return;
+        }
+        emailjs.init(cfg.emailjsPublicKey);
+        btn.disabled = true;
+        let sent = 0, failed = 0, lastErr = '';
+        const sentIds = [];
+        const sendNext = (i)=>{
+            if (i>=targets.length){
+                statusEl.innerText = `Hoàn tất: ${sent} email đã gửi, ${failed} lỗi.` + (lastErr ? ` Lỗi gần nhất: ${lastErr}` : '');
+                document.getElementById('email-send-status').innerText = statusEl.innerText;
+                if (sentIds.length) logReminderSent(mode, sentIds, reminderPicker.key);
+                btn.disabled = false;
+                return;
+            }
+            const t = targets[i];
+            statusEl.innerText = `Đang gửi ${i+1}/${targets.length}...`;
+            emailjs.send(cfg.emailjsServiceId, cfg.emailjsTemplateId, {
+                to_email: t.email, unit_name: t.name,
+                message: tpl.split('{don_vi}').join(t.name)
+            }).then(()=>{ sent++; sentIds.push(t.id); }).catch(e=>{ failed++; lastErr = `${e && e.status || ''} ${e && (e.text || e.message) || e}`.trim(); console.error('[EmailJS]', e); }).finally(()=>sendNext(i+1));
+        };
+        sendNext(0);
     });
 }
 
