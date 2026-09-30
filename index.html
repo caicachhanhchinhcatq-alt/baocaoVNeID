@@ -48,6 +48,7 @@ body::before {
 }
 * { box-sizing: border-box; }
 body { margin:0; font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text-main); }
+button, input, select, textarea { font-family: inherit; }
 .app-shell { max-width: 430px; margin: 0 auto; min-height: 100vh; background: var(--bg); position: relative; padding-bottom: 78px; }
 .page-title-row { display:flex; align-items:center; gap:10px; margin:0 0 14px; }
 .page-title-row .page-title { margin:0; flex:1; min-width:0; }
@@ -99,6 +100,12 @@ body { margin:0; font-family: 'Inter', -apple-system, sans-serif; background: va
 .big-metric { text-align:center; padding: 4px 0 14px; }
 .big-metric .val { font-size:34px; font-weight:800; }
 .big-metric .lbl { font-size:12px; color: var(--text-muted); }
+/* Chống rơi chữ: nhãn ngắn cân đều các dòng; ghi chú dài không để lẻ 1 từ ở dòng cuối */
+.stat-box .l, .big-metric .lbl, .big-metric .note { text-wrap: balance; }
+.note { text-wrap: pretty; }
+/* Dòng phụ dưới thứ hạng: luôn trên 1 dòng, chữ co theo bề rộng màn hình */
+.rank-sub { font-size:clamp(10.5px, 3vw, 12.5px); color:var(--text-muted); margin-top:4px; white-space:nowrap; }
+.rank-basis { font-size:12px; color:var(--text-muted); text-align:center; margin:0 0 10px; text-wrap:balance; }
 .notice-box { background: var(--blue-bg); color: var(--blue-text); border-radius:10px; padding:10px 12px; font-size:12px; margin-bottom:14px; display:flex; gap:8px; align-items:flex-start; }
 .warn-box { background: var(--amber-bg); color: var(--amber-text); border-radius:10px; padding:10px 12px; font-size:12px; margin-bottom:14px; display:flex; gap:8px; align-items:flex-start; }
 .list-row { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--border); }
@@ -127,6 +134,14 @@ table.dt.dt-fit { min-width:0; table-layout:fixed; font-size:11.5px; }
 table.dt.dt-fit th, table.dt.dt-fit td { padding:7px 3px; white-space:normal; word-break:break-word; }
 table.dt.dt-fit th { font-size:10.5px; }
 table.dt.dt-fit td.unit-name { line-height:1.3; }
+table.dt.hl-table { font-size:10.5px; }
+table.dt.hl-table th { font-size:10px; }
+table.dt.hl-table th, table.dt.hl-table td { padding:7px 1px; white-space:nowrap; word-break:normal; }
+table.dt.hl-table td.unit-name { white-space:normal; word-break:break-word; padding-left:3px; }
+table.dt.hl-table th .sort-ic { font-size:8px; margin-left:1px; }
+table.dt.hl-unit-tbl th, table.dt.hl-unit-tbl td { padding:8px 2px; }
+table.dt.hl-unit-tbl th:nth-child(1), table.dt.hl-unit-tbl td:nth-child(1) { padding-left:6px; padding-right:8px; }
+table.dt.hl-unit-tbl th:nth-child(2), table.dt.hl-unit-tbl td:nth-child(2) { padding-left:8px; padding-right:6px; text-align:right; }
 table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
 .bottom-nav { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:430px; background: var(--card-bg); border-top:1px solid var(--border); display:flex; z-index:60; }
 .bottom-nav .nav-btn { flex:1; border:none; background:none; padding:10px 4px 8px; text-align:center; color: var(--text-muted); font-size:10.5px; cursor:pointer; }
@@ -224,6 +239,53 @@ table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
 ::-webkit-scrollbar { height:6px; width:6px; }
 ::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:10px; }
 
+
+/* ===== Nút chuyển chế độ: mục ĐANG CHỌN tô đầy màu nổi bật, mục chưa chọn để trong suốt ===== */
+.subtab-row button { background:transparent; color:var(--text-muted); border:1.5px solid var(--border); transition:background .15s, color .15s, transform .1s; }
+.subtab-row button.active, [data-theme="dark"] .subtab-row button.active { background:linear-gradient(135deg,#38bdf8,#22d3ee); color:#04122b; border-color:#7dd3fc; font-weight:800; box-shadow:0 0 0 2px rgba(56,189,248,.28), 0 4px 14px rgba(34,211,238,.35); }
+.subtab-row.multi button.active::before { content:"\2713"; margin-right:5px; font-weight:900; }
+.subtab-row button:active { transform:scale(.97); }
+.sort-bar button.sort-active { background:var(--blue-bg); color:var(--blue-text); border-color:var(--primary); font-weight:800; }
+/* ===== Nút xuất file: Excel xanh lá, Word xanh dương (cùng độ đậm), có phản hồi khi bấm ===== */
+.btn { transition:transform .1s, filter .15s; }
+.btn:active { transform:scale(.97); filter:brightness(1.18); }
+.btn-xls { background:#15803d; color:#fff; }
+.btn-doc { background:#1d4ed8; color:#fff; }
+.btn-xls.done, .btn-doc.done { filter:brightness(1.3); pointer-events:none; }
+/* ===== LÀM ĐẸP (chỉ CSS, xóa cả khối này là về như cũ) ===== */
+/* Chữ số thẳng hàng trong bảng và ô thống kê */
+table.dt td, table.dt th, .fiscal-tbl td, .stat-box .n, .big-metric .val, .rank-sub { font-variant-numeric: tabular-nums; }
+/* Thanh cuộn hợp tông nền tối (trước đây là màu xám sáng) */
+* { scrollbar-width: thin; scrollbar-color: rgba(56,189,248,.45) transparent; }
+::-webkit-scrollbar-thumb { background: rgba(56,189,248,.45); }
+::-webkit-scrollbar-track { background: transparent; }
+/* Thanh điều hướng dưới: mờ kính, vạch sáng và đổ sáng ở mục đang chọn, chừa vùng an toàn của iPhone */
+.bottom-nav { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.bottom-nav .nav-btn { position: relative; transition: color .18s; }
+.bottom-nav .nav-btn i { transition: transform .18s, filter .18s; }
+.bottom-nav .nav-btn.active::before { content:""; position:absolute; top:-1px; left:28%; right:28%; height:2px; border-radius:0 0 3px 3px; background:var(--primary); box-shadow:0 0 8px var(--neon); }
+.bottom-nav .nav-btn.active i { transform: translateY(-1px) scale(1.08); filter: drop-shadow(0 0 5px rgba(56,189,248,.7)); }
+/* Chuyển tab: hiện dần nhẹ */
+@keyframes subIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+.user-sub.active, .admin-sub.active { animation: subIn .22s ease-out; }
+/* Ô thống kê có viền và nền chuyển sắc nhẹ cho có chiều sâu */
+.stat-box { border:1px solid var(--border); background: linear-gradient(180deg, rgba(56,189,248,.07), rgba(56,189,248,0) 70%), var(--bg); }
+/* Ô nhập: sáng viền khi chọn */
+.form-control { transition: border-color .15s, box-shadow .15s; }
+.form-control:focus { box-shadow: 0 0 0 3px rgba(56,189,248,.2); }
+/* Popup: nền mờ, hiện bật nhẹ; tiêu đề cột luôn hiện khi cuộn danh sách dài */
+.modal-overlay { backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+.modal-box { animation: donePop .22s ease-out; }
+.modal-box table.dt thead th { position: sticky; top: 0; z-index: 1; background: var(--bg); }
+/* Bảng: dòng sáng lên khi chạm/rê, dòng của đơn vị mình đã có nền riêng nên không bị ghi đè */
+table.dt tbody tr { transition: background .12s; }
+table.dt tbody tr:hover { background: rgba(56,189,248,.08); }
+/* Huy chương top 3 ở bảng xếp hạng */
+.medal { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; font-size:11px; font-weight:800; color:#04122b; }
+.medal.m1 { background:linear-gradient(135deg,#fde68a,#f59e0b); box-shadow:0 0 8px rgba(245,158,11,.55); }
+.medal.m2 { background:linear-gradient(135deg,#f1f5f9,#94a3b8); box-shadow:0 0 8px rgba(148,163,184,.45); }
+.medal.m3 { background:linear-gradient(135deg,#fdba74,#c2410c); box-shadow:0 0 8px rgba(234,88,12,.45); }
+@media (prefers-reduced-motion: reduce) { .user-sub.active, .admin-sub.active, .modal-box { animation: none; } }
 </style>
 </head>
 <body>
@@ -298,6 +360,13 @@ table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
             <div class="stat-box"><div class="n" id="home-tongtthc">-</div><div class="l">Tổng hồ sơ TTHC</div></div>
           </div>
         </div>
+        <div class="card" id="home-hl-card" style="display:none; cursor:pointer;" onclick="showUserSub('hailong')">
+          <div style="font-weight:700; font-size:13px; margin-bottom:6px;">Mức độ hài lòng <span id="home-hl-month" style="font-weight:500; color:var(--text-muted);"></span></div>
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+            <div><span id="home-hl-val" style="font-size:26px; font-weight:800;">--</span> <span id="home-hl-delta" style="font-size:12px;"></span></div>
+            <span style="font-size:12px; color:var(--blue-text); font-weight:700;">Xem chi tiết <i class="fa-solid fa-chevron-right" style="font-size:10px;"></i></span>
+          </div>
+        </div>
         <div class="card">
           <h2>Lịch sử báo cáo</h2>
           <div id="home-history-list"></div>
@@ -327,7 +396,7 @@ table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
           <div class="form-group">
             <label>Số lượt đánh giá VNeID</label>
             <input type="number" min="0" id="input-soluot" class="form-control" placeholder="Nhập tổng số lượt" oninput="computeInputRatio()">
-            <div class="note">Bao gồm cả lượt khắc phục hồ sơ tháng trước, chỉ nhập 01 số tổng.</div>
+            <div class="note">Bao gồm cả lượt khắc phục hồ sơ tháng trước, chỉ nhập 01 số tổng. Đây là số đơn vị tự báo cáo, chỉ để Quản trị đối chiếu với số liệu V03 do Bộ Công an công bố. Số này không dùng tính tỷ lệ chính thức và không thay đổi số V03.</div>
           </div>
           <div class="form-group">
             <label>Tổng số hồ sơ TTHC giải quyết</label>
@@ -335,7 +404,7 @@ table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
             <div class="note">Không tính hồ sơ liên thông tư pháp, lưu trú, người nước ngoài.</div>
           </div>
           <div class="card" style="background:var(--bg); box-shadow:none; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:13px; color:var(--text-muted);">Tỷ lệ tự động tính</span>
+            <span style="font-size:13px; color:var(--text-muted);">Tỷ lệ theo số bạn báo cáo (tạm tính, không phải kết quả chính thức)</span>
             <span id="input-ratio-preview" style="font-weight:800; font-size:16px;">Chưa nhập</span>
           </div>
           <button class="btn btn-black" onclick="saveMonthlyReport()">Lưu số liệu tháng</button>
@@ -368,8 +437,8 @@ table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
           <div class="chart-wrap" style="height:230px; margin-top:6px;"><canvas id="fiscal-chart"></canvas></div>
           <div style="font-weight:700; font-size:13px; margin:14px 0 8px;">Kết quả từng tháng trong năm đánh giá</div>
           <div style="display:flex; gap:8px; margin-bottom:10px;">
-            <button class="btn btn-outline" style="padding:9px; font-size:13px;" onclick="exportFiscalMonthlyExcel()"><i class="fa-solid fa-file-excel"></i> Xuất Excel</button>
-            <button class="btn btn-black" style="padding:9px; font-size:13px;" onclick="exportFiscalMonthlyWord()"><i class="fa-solid fa-file-word"></i> Xuất Word</button>
+            <button class="btn btn-xls" style="padding:9px; font-size:13px;" onclick="exportFiscalMonthlyExcel()"><i class="fa-solid fa-file-excel"></i> Xuất Excel</button>
+            <button class="btn btn-doc" style="padding:9px; font-size:13px;" onclick="exportFiscalMonthlyWord()"><i class="fa-solid fa-file-word"></i> Xuất Word</button>
           </div>
           <div style="overflow-x:auto;">
             <table class="fiscal-tbl"><thead><tr><th style="text-align:left;">Tháng</th><th>Số lượt đơn vị báo cáo</th><th>Số lượt chính thức V03</th><th>Tổng TTHC</th><th>Tỷ lệ</th><th>Đánh giá</th></tr></thead><tbody id="fiscal-monthly-body"></tbody></table>
@@ -378,21 +447,101 @@ table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
       </div>
     </div>
 
+    <!-- MỨC ĐỘ HÀI LÒNG (ĐƠN VỊ) -->
+    <div id="user-hailong" class="user-sub">
+      <div class="content-pad">
+        <div class="page-title-row">
+          <button class="back-btn" onclick="showUserSub('home')"><i class="fa-solid fa-chevron-left"></i></button>
+          <h2 class="page-title">Mức độ hài lòng</h2>
+        </div>
+        <div class="subtab-row">
+          <button class="active" id="uhl-tab-own" onclick="setUhlPanel('own')">Của đơn vị</button>
+          <button id="uhl-tab-rank" onclick="setUhlPanel('rank')">Xếp hạng hài lòng</button>
+        </div>
+        <div class="card" id="uhl-panel-own">
+          <select id="uhl-year-select" class="form-control" style="margin-bottom:8px;" onchange="loadUserHaiLong()"></select>
+          <div class="note" style="margin-bottom:10px;"><i class="fa-solid fa-circle-info"></i> Số liệu do Bộ Công an gửi (V03 thống kê), Quản trị cập nhật hằng tháng. Tháng chưa có số liệu hiện "Chưa có".</div>
+          <div class="big-metric">
+            <div class="lbl">Mức độ hài lòng trung bình năm đánh giá</div>
+            <div class="val" id="uhl-avg">--</div>
+            <div class="note" id="uhl-avg-note"></div>
+          </div>
+          <div class="stat-grid">
+            <div class="stat-box"><div class="n" id="uhl-latest">--</div><div class="l" id="uhl-latest-lbl">Tháng mới nhất</div></div>
+            <div class="stat-box"><div class="n" id="uhl-luot">0</div><div class="l">Tổng lượt đánh giá</div></div>
+          </div>
+          <div class="chart-wrap" style="height:210px; margin-top:6px;"><canvas id="uhl-chart"></canvas></div>
+          <div id="uhl-cmp-box" style="display:none;">
+            <div style="font-weight:700; font-size:13px; margin:14px 0 8px;">So sánh với mức chung toàn tỉnh</div>
+            <div class="data-table-wrap">
+              <table class="dt dt-fit"><thead><tr><th style="text-align:left;">Tháng</th><th>Đơn vị</th><th>Toàn tỉnh</th><th>Chênh lệch</th></tr></thead>
+              <tbody id="uhl-cmp-body"></tbody></table>
+            </div>
+            <div class="note" style="margin-top:6px; font-size:11px;">Mức chung toàn tỉnh = bình quân theo số lượt đánh giá của từng đơn vị. Chênh lệch tính bằng điểm %: dương là đơn vị cao hơn toàn tỉnh.</div>
+          </div>
+          <div style="font-weight:700; font-size:13px; margin:14px 0 8px;">Kết quả từng tháng trong năm đánh giá</div>
+          <div style="display:flex; gap:8px; margin-bottom:10px;">
+            <button class="btn btn-xls" style="padding:9px; font-size:13px;" onclick="exportHlUnitExcel()"><i class="fa-solid fa-file-excel"></i> Xuất Excel</button>
+            <button class="btn btn-doc" style="padding:9px; font-size:13px;" onclick="exportHlUnitWord()"><i class="fa-solid fa-file-word"></i> Xuất Word</button>
+          </div>
+          <div class="data-table-wrap">
+            <table class="dt dt-fit hl-table hl-unit-tbl"><thead><tr><th style="text-align:left; width:19%;">Tháng</th><th style="width:13%;">Lượt</th><th>Câu 1</th><th>Câu 2</th><th>Câu 3</th><th>Câu 4</th><th>Câu 5</th><th>Chung</th></tr></thead>
+            <tbody id="uhl-body"></tbody></table>
+          </div>
+          <div class="note" style="margin-top:8px; font-size:11px;">Dòng Trung bình = trung bình cộng các tháng đã có số liệu; cột Lượt là tổng lượt.</div>
+        </div>
+        <div id="uhl-panel-rank" style="display:none;">
+          <div class="card">
+            <div class="subtab-row">
+              <button class="active" id="uhr-tab-m" onclick="setUhrMode('m')">Theo tháng</button>
+              <button id="uhr-tab-c" onclick="setUhrMode('c')">Trung bình</button>
+            </div>
+            <div class="rank-basis">Xếp hạng theo <b>mức độ hài lòng chung</b> = trung bình 5 câu hỏi (không phải số lượt đánh giá).</div>
+            <select id="uhr-year-select" class="form-control" style="margin-bottom:8px;" onchange="onUhrYearChange()"></select>
+            <select id="uhr-month-select" class="form-control" style="font-size:11px; margin-bottom:12px;" onchange="loadUhr()"></select>
+            <div class="big-metric">
+              <div class="lbl">Thứ hạng mức độ hài lòng của đơn vị</div>
+              <div class="val" id="uhr-pos">--</div>
+              <div id="uhr-sub" class="rank-sub"></div>
+            </div>
+            <div class="stat-grid">
+              <div class="stat-box"><div class="n" id="uhr-own">--</div><div class="l">Mức hài lòng của đơn vị</div></div>
+              <div class="stat-box"><div class="n" id="uhr-avg">--</div><div class="l">Mức chung toàn tỉnh</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div style="font-weight:700; font-size:13px; margin-bottom:8px;">Top 10 mức độ hài lòng cao nhất</div>
+            <div class="chart-wrap" style="height:320px;"><canvas id="uhr-chart"></canvas></div>
+            <div class="note">Cột xanh dương là đơn vị của bạn. Trục ngang cắt bớt phần thấp để thấy rõ chênh lệch.</div>
+          </div>
+          <div class="card">
+            <div style="font-weight:700; font-size:13px; margin-bottom:8px;">Bảng xếp hạng theo mức độ hài lòng</div>
+            <div class="form-group"><input type="search" id="uhr-search" class="form-control" placeholder="Tìm tên đơn vị..." oninput="renderUhrRows()"></div>
+            <div class="data-table-wrap">
+              <table class="dt dt-fit"><thead><tr><th class="sortable" data-k="rank" onclick="setUhrSort('rank')" style="width:11%;">Hạng <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="name" onclick="setUhrSort('name')">Tên đơn vị <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="luot" onclick="setUhrSort('luot')" style="width:18%;">Lượt <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="chung" onclick="setUhrSort('chung')" style="width:20%;">Chung (%) <i class="fa-solid fa-sort sort-ic"></i></th></tr></thead>
+              <tbody id="uhr-body"></tbody></table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- THỨ HẠNG -->
     <div id="user-rank" class="user-sub">
       <div class="content-pad">
-        <h2 class="page-title">Thứ hạng đơn vị</h2>
+        <h2 class="page-title">Thứ hạng theo lượt đánh giá</h2>
         <div class="card">
           <div class="subtab-row">
             <button class="active" id="rk-tab-m" onclick="setRankMode('m')">Theo tháng</button>
             <button id="rk-tab-c" onclick="setRankMode('c')">Lũy kế</button>
           </div>
+          <div class="rank-basis">Xếp hạng theo <b>tỷ lệ lượt đánh giá</b> = lượt đánh giá V03 ÷ Tổng TTHC (không phải mức độ hài lòng).</div>
           <select id="rk-year-select" class="form-control" style="margin-bottom:8px;" onchange="onRankYearChange()"></select>
           <select id="rk-month-select" class="form-control" style="font-size:11px; margin-bottom:12px;" onchange="loadRank()"></select>
           <div class="big-metric">
-            <div class="lbl">Thứ hạng của đơn vị</div>
+            <div class="lbl">Thứ hạng tỷ lệ lượt đánh giá của đơn vị</div>
             <div class="val" id="rk-pos">--</div>
-            <div id="rk-sub" class="note" style="margin-top:4px;"></div>
+            <div id="rk-sub" class="rank-sub"></div>
           </div>
           <div class="stat-grid">
             <div class="stat-box"><div class="n" id="rk-own-tyle">--</div><div class="l">Tỷ lệ của đơn vị</div></div>
@@ -400,15 +549,15 @@ table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
           </div>
         </div>
         <div class="card">
-          <div style="font-weight:700; font-size:13px; margin-bottom:8px;">Top 10 đơn vị có tỷ lệ cao nhất</div>
+          <div style="font-weight:700; font-size:13px; margin-bottom:8px;">Top 10 tỷ lệ lượt đánh giá cao nhất</div>
           <div class="chart-wrap" style="height:320px;"><canvas id="rank-chart"></canvas></div>
           <div class="note">Cột xanh dương là đơn vị của bạn. Xanh lá: đạt (từ 60%), đỏ: chưa đạt.</div>
         </div>
         <div class="card">
-          <div style="font-weight:700; font-size:13px; margin-bottom:8px;">Bảng xếp hạng các đơn vị</div>
+          <div style="font-weight:700; font-size:13px; margin-bottom:8px;">Bảng xếp hạng theo tỷ lệ lượt đánh giá</div>
           <div class="form-group"><input type="search" id="rk-search" class="form-control" placeholder="Tìm tên đơn vị..." oninput="renderRankRows()"><div class="note" style="margin-top:4px;">Bấm vào tên đơn vị để xem biểu đồ kết quả từng tháng.</div></div>
           <div class="data-table-wrap">
-            <table class="dt dt-fit"><thead><tr><th style="width:11%;">Hạng</th><th>Tên đơn vị</th><th style="width:15%;">Lượt V03</th><th style="width:15%;">TTHC</th><th style="width:16%;">Tỷ lệ</th></tr></thead>
+            <table class="dt dt-fit"><thead><tr><th class="sortable" data-k="rank" onclick="setRkSort('rank')" style="width:11%;">Hạng <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="name" onclick="setRkSort('name')">Tên đơn vị <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="col1" onclick="setRkSort('col1')" style="width:15%;">Lượt V03 <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="col2" onclick="setRkSort('col2')" style="width:15%;">TTHC <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="tyLe" onclick="setRkSort('tyLe')" style="width:16%;">Tỷ lệ <i class="fa-solid fa-sort sort-ic"></i></th></tr></thead>
             <tbody id="rk-body"></tbody></table>
           </div>
         </div>
@@ -517,6 +666,7 @@ table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
       <button class="nav-btn" id="unav-input" onclick="showUserSub('input')"><i class="fa-solid fa-pen-to-square"></i>Nhập liệu</button>
       <button class="nav-btn" id="unav-cumulative" onclick="showUserSub('cumulative')"><i class="fa-solid fa-chart-column"></i>Lũy kế</button>
       <button class="nav-btn" id="unav-rank" onclick="showUserSub('rank')"><i class="fa-solid fa-ranking-star"></i>Thứ hạng</button>
+      <button class="nav-btn" id="unav-hailong" onclick="showUserSub('hailong')"><i class="fa-solid fa-face-smile"></i>Hài lòng</button>
       <button class="nav-btn" id="unav-account" onclick="showUserSub('account')"><i class="fa-solid fa-user"></i>Tài khoản</button>
     </div>
   </div>
@@ -549,8 +699,26 @@ table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
           <div class="stat-box red clickable" onclick="openOvList('missing')"><div class="n" id="ov-chuanop">0</div><div class="l">Chưa nộp số liệu <i class="fa-solid fa-chevron-right"></i></div></div>
         </div>
         <div class="card">
-          <h2>Tỷ lệ toàn tỉnh theo tháng</h2>
+          <h2>Tỷ lệ số lượt đánh giá toàn tỉnh theo tháng</h2>
+          <div class="note" style="font-size:11.5px; margin-bottom:6px;">Tỷ lệ = tổng số lượt đánh giá V03 ÷ tổng số TTHC của tháng đó; có thể vượt 100%.</div>
           <div class="chart-wrap"><canvas id="ov-year-chart"></canvas></div>
+        </div>
+        <div class="card">
+          <h2>Mức độ hài lòng chung toàn tỉnh theo tháng</h2>
+          <div class="note" style="font-size:11.5px; margin-bottom:6px;">Bình quân theo số lượt đánh giá của từng đơn vị; mức chung của mỗi đơn vị = trung bình 5 câu hỏi. Tháng chưa import file Bộ Công an thì để trống.</div>
+          <div class="chart-wrap"><canvas id="ov-hl-chart"></canvas></div>
+        </div>
+        <div class="card">
+          <h2>Tổng toàn tỉnh</h2>
+          <div class="stat-grid">
+            <div class="stat-box"><div class="n" id="ov-sum-luot-m">-</div><div class="l">Tổng lượt đánh giá tháng</div></div>
+            <div class="stat-box"><div class="n" id="ov-sum-tthc-m">-</div><div class="l">Tổng TTHC tháng</div></div>
+          </div>
+          <div class="stat-grid" style="margin-bottom:6px;">
+            <div class="stat-box"><div class="n" id="ov-sum-luot-c">-</div><div class="l">Lũy kế lượt đánh giá</div></div>
+            <div class="stat-box"><div class="n" id="ov-sum-tthc-c">-</div><div class="l">Lũy kế TTHC</div></div>
+          </div>
+          <div class="note" id="ov-sum-scope" style="font-size:11px;"></div>
         </div>
         <div class="card">
           <h2>Kết quả tháng gần nhất</h2>
@@ -579,9 +747,10 @@ table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
         </div>
         <div class="note" id="ov-list-sub" style="margin-bottom:8px;"></div>
         <div class="btn-row" style="margin-bottom:8px;">
-          <button class="btn btn-outline" style="padding:9px; font-size:13px;" onclick="exportOvListExcel()"><i class="fa-solid fa-file-excel"></i> Xuất Excel</button>
-          <button class="btn btn-black" style="padding:9px; font-size:13px;" onclick="exportOvListWord()"><i class="fa-solid fa-file-word"></i> Xuất Word</button>
+          <button class="btn btn-xls" style="padding:9px; font-size:13px;" onclick="exportOvListExcel()"><i class="fa-solid fa-file-excel"></i> Xuất Excel</button>
+          <button class="btn btn-doc" style="padding:9px; font-size:13px;" onclick="exportOvListWord()"><i class="fa-solid fa-file-word"></i> Xuất Word</button>
         </div>
+        <div class="form-group" style="margin-bottom:8px;"><input type="search" id="ov-list-search" class="form-control" placeholder="Tìm tên đơn vị..." oninput="renderOvListRows()"></div>
         <div style="max-height:62vh; overflow-y:auto;">
           <table class="dt dt-fit"><thead id="ov-list-head"></thead><tbody id="ov-list-body"></tbody></table>
         </div>
@@ -604,6 +773,11 @@ table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
           <div class="note" id="rp-save-note"></div>
         </div>
         <input type="text" id="rp-search" class="form-control" placeholder="Tìm đơn vị theo tên hoặc email..." oninput="filterReminderList()" style="margin-bottom:8px;">
+        <div class="sort-bar" id="rp-sort-bar" style="margin-bottom:8px;"><span>Sắp xếp theo:</span>
+          <button data-k="name" onclick="domListSort('rp-list','name',true)">Tên đơn vị <i class="fa-solid fa-sort sort-ic"></i></button>
+          <button data-k="email" onclick="domListSort('rp-list','email',true)">Email <i class="fa-solid fa-sort sort-ic"></i></button>
+          <button data-k="done" onclick="domListSort('rp-list','done',false)">Đã nhập số liệu <i class="fa-solid fa-sort sort-ic"></i></button>
+        </div>
         <label style="display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:600; cursor:pointer; margin-bottom:4px;"><input type="checkbox" id="rp-select-all" onchange="toggleReminderPickerAll(this.checked)"> Chọn tất cả (<span id="rp-selected-count">0</span>)</label>
         <div id="rp-list" style="max-height:30vh; overflow-y:auto; margin-bottom:8px;"></div>
         <div class="form-group">
@@ -633,10 +807,10 @@ table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
           <div class="stat-box"><div class="n" id="dc-avg">0%</div><div class="l">Chênh lệch bình quân giữa số lượt đánh giá đơn vị báo cáo và V03 <span id="dc-avg-scope"></span></div></div>
           <div class="stat-box red"><div class="n" id="dc-over">0</div><div class="l">Số đơn vị có chênh lệch trên 10%</div></div>
         </div>
-        <div class="notice-box"><i class="fa-solid fa-circle-info"></i> Chênh lệch có thể do thời điểm chốt số liệu, phương pháp tổng hợp hoặc cập nhật hệ thống khác nhau.<br>Chênh lệch % của từng đơn vị = |Đơn vị báo cáo − V03| ÷ V03 × 100. Chỉ tính các đơn vị đã có đủ cả hai số liệu; chênh lệch bình quân là trung bình cộng của các tỷ lệ này.</div>
+        <div class="notice-box"><i class="fa-solid fa-circle-info"></i> <b>Đơn vị báo cáo</b> = số lượt đơn vị tự nhập (không phải số chính thức). <b>V03</b> = số lượt chính thức từ file Bộ Công an hoặc Export/Import. Chỉ so sánh đơn vị đã tự nhập lượt và đã có V03.<br>Chênh lệch có thể do thời điểm chốt số liệu, phương pháp tổng hợp hoặc cập nhật hệ thống khác nhau.<br>Chênh lệch % của từng đơn vị = |Đơn vị báo cáo − V03| ÷ V03 × 100. Chỉ tính các đơn vị đã có đủ cả hai số liệu; chênh lệch bình quân là trung bình cộng của các tỷ lệ này.</div>
         <div class="btn-row" style="margin-bottom:14px;">
-          <button class="btn btn-outline" onclick="exportReconcileExcel()"><i class="fa-solid fa-file-excel"></i> Xuất Excel</button>
-          <button class="btn btn-black" onclick="exportReconcileWord()"><i class="fa-solid fa-file-word"></i> Xuất Word</button>
+          <button class="btn btn-xls" onclick="exportReconcileExcel()"><i class="fa-solid fa-file-excel"></i> Xuất Excel</button>
+          <button class="btn btn-doc" onclick="exportReconcileWord()"><i class="fa-solid fa-file-word"></i> Xuất Word</button>
         </div>
         <div class="form-group"><input type="search" id="dc-search" class="form-control" placeholder="Tìm tên đơn vị..." oninput="renderReconcileRows()"><div class="note" id="dc-search-count" style="margin-top:4px;"></div></div>
         <div class="sort-bar" id="dc-sort-bar"><span>Sắp xếp theo:</span>
@@ -659,8 +833,9 @@ table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
           <button class="back-btn" onclick="showAdminSub('tongquan')"><i class="fa-solid fa-chevron-left"></i></button>
           <h2 class="page-title">Nhập số liệu chính thức V03</h2>
         </div>
-        <div class="notice-box"><i class="fa-solid fa-circle-info"></i> Số liệu này lưu riêng, tách biệt với số liệu đơn vị tự báo cáo, dùng để đối chiếu và tính Phụ lục 2, 3.</div>
+        <div class="notice-box"><i class="fa-solid fa-circle-info"></i> <div>Số liệu tháng gồm 3 loại: <b>① Số lượt đánh giá chính thức V03</b> (Bộ Công an công bố, dùng tính chỉ tiêu); <b>② Tổng số TTHC</b> (đơn vị tự nhập ở giao diện đơn vị, admin có thể nhập hộ); <b>③ Mức độ hài lòng câu 1–5</b> (chỉ có trong file Bộ Công an). Tỷ lệ chỉ tiêu = ① ÷ ②. <b>Số lượt đơn vị tự báo cáo</b> (đơn vị nhập ở giao diện đơn vị) là số liệu khác, lưu riêng: chỉ dùng cho tab Đối chiếu (Chênh lệch), không dùng tính chỉ tiêu và không bao giờ ghi đè ①. Tỷ lệ chính thức (Phụ lục 2, 3) chỉ lấy ① từ <b>Import file Bộ Công an</b> hoặc <b>Export/Import số liệu</b>. Nhập tay từng đơn vị của admin thì vẫn ghi vào ①.</div></div>
         <div class="card">
+          <h2>Nhập tay từng đơn vị (số lượt V03 + Tổng số TTHC)</h2>
           <div class="form-group"><label>Năm đánh giá</label><select id="v03-year-select" class="form-control" onchange="onAdminYearChange('v03')"></select></div>
           <div class="form-group"><label>Tháng</label><select id="v03-month-select" class="form-control" onchange="loadV03Form()"></select></div>
           <div class="notice-box" id="v03-complete-note" style="display:none;"><i class="fa-solid fa-circle-check"></i> Đã có đầy đủ số liệu V03 cho tháng này của tất cả các đơn vị</div>
@@ -685,12 +860,31 @@ table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
             <h2 style="margin:0;">Đơn vị chưa có số liệu V03 <span id="v03-missing-count"></span></h2>
             <label class="toggle-switch"><input type="checkbox" id="v03-missing-toggle" onchange="applyV03MissingToggle()"><span class="toggle-slider"></span></label>
           </div>
-          <div id="v03-missing-list" style="display:none; margin-top:10px;"></div>
+          <div id="v03-missing-wrap" style="display:none; margin-top:10px;">
+            <div class="form-group"><input type="search" id="v03m-search" class="form-control" placeholder="Tìm tên đơn vị..." oninput="domListApply('v03-missing-list')"></div>
+            <div class="sort-bar" id="v03m-sort-bar"><span>Sắp xếp theo:</span>
+              <button data-k="name" onclick="domListSort('v03-missing-list','name',true)">Tên đơn vị <i class="fa-solid fa-sort sort-ic"></i></button>
+            </div>
+            <div id="v03-missing-list"></div>
+          </div>
         </div>
         <div class="card">
-          <h2>Export / Import số liệu</h2>
+          <h2>Import file báo cáo của Bộ Công an (số lượt V03 + mức độ hài lòng, cả 129 đơn vị)</h2>
           <div class="note" style="margin-bottom:10px; font-size:12.5px; line-height:1.5;">
-            Dùng khi cần nhập số liệu V03 cho nhiều đơn vị cùng lúc:
+            Chọn file Excel Bộ Công an gửi hằng tháng. Hệ thống tự đọc tháng ở tiêu đề, tự cộng các lĩnh vực về 5 phòng, rồi cập nhật cùng lúc <b>số lượt đánh giá chính thức V03</b> (dùng tính chỉ tiêu) và <b>mức độ hài lòng câu hỏi 1–5</b> (xem ở tab Hài lòng). Số liệu V03 đã có của tháng đó sẽ bị ghi đè. File này <b>không có</b> Tổng số TTHC. Trước khi import, hệ thống kiểm tra file và cho bạn xử lý ngay những chỗ chưa nhận diện được.
+          </div>
+          <div class="file-drop" onclick="document.getElementById('bca-import-file').click()">
+            <i class="fa-solid fa-file-arrow-up"></i>
+            <div id="bca-import-label">Nhấn để chọn file Excel của Bộ Công an</div>
+          </div>
+          <input type="file" id="bca-import-file" style="display:none;" accept=".xlsx,.xls" onchange="handleBcaImportFile(event)">
+          <button class="btn btn-primary" onclick="runBcaImport()">Import file Bộ Công an</button>
+          <div id="bca-import-status" class="note" style="margin-top:8px;"></div>
+        </div>
+        <div class="card">
+          <h2>Export / Import số liệu (số lượt V03 + Tổng số TTHC nhập tay hàng loạt)</h2>
+          <div class="note" style="margin-bottom:10px; font-size:12.5px; line-height:1.5;">
+            Chỉ dùng khi Bộ chưa gửi file hoặc cần nhập <b>Tổng số TTHC</b> hộ nhiều đơn vị. Nếu tháng đó đã import file Bộ Công an thì <b>không cần</b> nhập lại số lượt V03 (nhập lại sẽ ghi đè số lượt của file Bộ):
             <ol style="margin:6px 0 6px; padding-left:18px;">
               <li>Chọn năm đánh giá và tháng ở đầu trang, bấm <b>Export danh sách</b> để tải file Excel gồm 129 đơn vị của tháng đó (đơn vị nào đã có số liệu thì được điền sẵn).</li>
               <li>Mở file, điền cột <b>Số lượt đánh giá chính thức V03</b> cho từng đơn vị. Cột <b>Tổng số TTHC</b> là tùy chọn. Không sửa cột Mã đơn vị và Tên đơn vị.</li>
@@ -708,6 +902,39 @@ table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
           <input type="file" id="v03-import-file" style="display:none;" accept=".xlsx,.xls" onchange="handleV03ImportFile(event)">
           <button class="btn btn-primary" onclick="runV03Import()">Import vào hệ thống</button>
           <div id="v03-import-status" class="note" style="margin-top:8px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MỨC ĐỘ HÀI LÒNG -->
+    <div id="admin-hailong" class="admin-sub">
+      <div class="content-pad">
+        <div class="page-title-row">
+          <button class="back-btn" onclick="showAdminSub('tongquan')"><i class="fa-solid fa-chevron-left"></i></button>
+          <h2 class="page-title">Mức độ hài lòng</h2>
+        </div>
+        <div class="subtab-row">
+          <button class="active" id="hltab-1" onclick="showHaiLongTab(1)">Theo tháng</button>
+          <button id="hltab-2" onclick="showHaiLongTab(2)">Mức độ hài lòng trung bình</button>
+        </div>
+        <div class="form-group"><select id="hl-year-select" class="form-control" onchange="onAdminYearChange('hl')"></select></div>
+        <div class="form-group"><select id="hl-month-select" class="form-control" onchange="renderHaiLong()"></select></div>
+        <div class="notice-box" id="hl-source-note"></div>
+        <div class="stat-grid">
+          <div class="stat-box"><div class="n" id="hl-avg">--</div><div class="l">Mức độ hài lòng chung toàn tỉnh (bình quân theo số lượt đánh giá của từng đơn vị)</div></div>
+          <div class="stat-box"><div class="n" id="hl-count">0 / 129</div><div class="l">Số đơn vị đã có số liệu hài lòng</div></div>
+        </div>
+        <div class="btn-row" style="margin-bottom:14px;">
+          <button class="btn btn-xls" onclick="exportHaiLongExcel()"><i class="fa-solid fa-file-excel"></i> Xuất Excel</button>
+          <button class="btn btn-doc" onclick="exportHaiLongWord()"><i class="fa-solid fa-file-word"></i> Xuất Word</button>
+        </div>
+        <div class="card pl-card">
+          <div class="form-group" style="padding:0 6px;"><input type="search" id="hl-search" class="form-control" placeholder="Tìm tên đơn vị..." oninput="renderHaiLongRows()"></div>
+          <div class="data-table-wrap">
+            <table class="dt dt-fit hl-table"><thead><tr><th style="width:6.5%;">STT</th><th class="sortable" data-k="name" onclick="setHlSort('name')" style="text-align:left; width:20.5%; padding-left:3px;">Đơn vị <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="luot" onclick="setHlSort('luot')" style="width:9.5%;">Lượt <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="q1" onclick="setHlSort('q1')" style="width:10.4%;">Câu 1 <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="q2" onclick="setHlSort('q2')" style="width:10.4%;">Câu 2 <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="q3" onclick="setHlSort('q3')" style="width:10.4%;">Câu 3 <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="q4" onclick="setHlSort('q4')" style="width:10.4%;">Câu 4 <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="q5" onclick="setHlSort('q5')" style="width:10.4%;">Câu 5 <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="chung" onclick="setHlSort('chung')" style="width:11.5%;">Chung <i class="fa-solid fa-sort sort-ic"></i></th></tr></thead>
+            <tbody id="hl-body"></tbody></table>
+          </div>
+          <div class="note" style="padding:0 6px; margin-top:8px; font-size:11.5px;">Câu 1–5 và Chung tính theo %: tỷ lệ hài lòng theo từng câu hỏi do V03 thống kê; Chung = trung bình 5 câu. Dòng Trung bình đầu bảng = trung bình cộng các đơn vị đang hiển thị (cột Lượt là tổng lượt). Đơn vị chưa có số liệu hiện "Chưa có".</div>
         </div>
       </div>
     </div>
@@ -730,9 +957,14 @@ table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
           <div class="stat-box"><div class="n" id="pl-dat">0 / 129</div><div class="l" id="pl-dat-label">Số đơn vị đạt chỉ tiêu (tỷ lệ từ 60% trở lên) trên tổng số đơn vị</div></div>
           <div class="stat-box"><div class="n" id="pl-tyle">0%</div><div class="l" id="pl-tyle-label">Tỷ lệ bình quân của các đơn vị (lượt đánh giá ÷ tổng TTHC)</div><div class="l" id="pl-tyle-scope"></div></div>
         </div>
+        <div class="stat-grid">
+          <div class="stat-box"><div class="n" id="pl-tong-luot">--</div><div class="l" id="pl-tong-luot-label">Tổng số lượt đánh giá toàn tỉnh (tháng)</div></div>
+          <div class="stat-box"><div class="n" id="pl-tong-tthc">--</div><div class="l" id="pl-tong-tthc-label">Tổng số TTHC toàn tỉnh (tháng)</div></div>
+        </div>
+        <div class="note" id="pl-tong-scope" style="margin:-6px 0 12px; text-align:center; font-size:11px;"></div>
         <div class="btn-row" style="margin-bottom:14px;">
-          <button class="btn btn-outline" onclick="exportPhuLucExcel()"><i class="fa-solid fa-file-excel"></i> Xuất Excel</button>
-          <button class="btn btn-black" onclick="exportPhuLucWord()"><i class="fa-solid fa-file-word"></i> Xuất Word</button>
+          <button class="btn btn-xls" onclick="exportPhuLucExcel()"><i class="fa-solid fa-file-excel"></i> Xuất Excel</button>
+          <button class="btn btn-doc" onclick="exportPhuLucWord()"><i class="fa-solid fa-file-word"></i> Xuất Word</button>
         </div>
         <div class="form-group"><input type="search" id="pl-search" class="form-control" placeholder="Tìm tên đơn vị..." oninput="renderPhuLucRows()"><div class="note" id="pl-search-count" style="margin-top:4px;"></div></div>
         <div class="card pl-card">
@@ -758,8 +990,50 @@ table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
         <div style="position:relative; height:230px;"><canvas id="pl-unit-chart"></canvas></div>
         <div class="note" style="margin-top:8px; font-size:11px;">Cột xanh: đạt (từ 60%) · Cột đỏ: chưa đạt · Cột xám: chưa đủ số liệu V03 hoặc Tổng TTHC. Tỷ lệ = lượt đánh giá V03 ÷ Tổng TTHC.</div>
         <div style="display:flex; gap:8px; margin-top:10px;">
-          <button class="btn btn-outline" style="padding:9px; font-size:13px;" onclick="exportPlUnitExcel()"><i class="fa-solid fa-file-excel"></i> Xuất Excel</button>
-          <button class="btn btn-black" style="padding:9px; font-size:13px;" onclick="exportPlUnitWord()"><i class="fa-solid fa-file-word"></i> Xuất Word</button>
+          <button class="btn btn-xls" style="padding:9px; font-size:13px;" onclick="exportPlUnitExcel()"><i class="fa-solid fa-file-excel"></i> Xuất Excel</button>
+          <button class="btn btn-doc" style="padding:9px; font-size:13px;" onclick="exportPlUnitWord()"><i class="fa-solid fa-file-word"></i> Xuất Word</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- POPUP KIỂM TRA FILE BỘ CÔNG AN TRƯỚC KHI IMPORT -->
+    <div id="bca-review-modal" class="modal-overlay" style="display:none;">
+      <div class="modal-box card" style="max-height:88vh; overflow-y:auto;">
+        <h2 style="margin:0 0 6px; font-size:15px;"><i class="fa-solid fa-clipboard-check"></i> Kiểm tra file trước khi import</h2>
+        <div id="bca-review-body" style="font-size:12.5px; line-height:1.5;"></div>
+        <div style="display:flex; gap:8px; margin-top:12px;">
+          <button class="btn btn-outline" style="padding:9px; font-size:13px;" onclick="closeBcaReview(null)">Hủy</button>
+          <button class="btn btn-primary" id="bca-review-go" style="padding:9px; font-size:13px;" onclick="closeBcaReview(true)">Import</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- POPUP KẾT QUẢ HÀI LÒNG THEO THÁNG CỦA ĐƠN VỊ -->
+    <div id="hl-unit-modal" class="modal-overlay" style="display:none;" onclick="if(event.target===this) closeHlUnitModal()">
+      <div class="modal-box card" style="max-width:420px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:4px;">
+          <h2 id="hl-unit-modal-title" style="margin:0; font-size:14px; line-height:1.35;"></h2>
+          <button onclick="closeHlUnitModal()" style="background:none; border:none; color:var(--text-main); font-size:18px; cursor:pointer; padding:0 2px;"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="note" id="hl-unit-modal-sub" style="margin-bottom:8px;"></div>
+        <div class="subtab-row multi" style="margin-bottom:8px;">
+          <button class="active" id="hl-tg-table" onclick="toggleHlUnitView('table')"><i class="fa-solid fa-table"></i> Bảng</button>
+          <button id="hl-tg-chart" onclick="toggleHlUnitView('chart')"><i class="fa-solid fa-chart-column"></i> Biểu đồ</button>
+        </div>
+        <div id="hl-unit-chart-box" style="display:none;">
+          <div style="position:relative; height:200px; margin-bottom:6px;"><canvas id="hl-unit-chart"></canvas></div>
+          <div class="note" id="hl-unit-chart-note" style="font-size:11px; margin-bottom:8px;"></div>
+        </div>
+        <div id="hl-unit-table-box">
+        <div class="data-table-wrap">
+          <table class="dt dt-fit hl-table hl-unit-tbl"><thead><tr><th style="text-align:left; width:19%;">Tháng</th><th style="width:13%;">Lượt</th><th>Câu 1</th><th>Câu 2</th><th>Câu 3</th><th>Câu 4</th><th>Câu 5</th><th>Chung</th></tr></thead>
+          <tbody id="hl-unit-body"></tbody></table>
+        </div>
+        <div class="note" style="margin-top:8px; font-size:11px;">Dòng Trung bình = trung bình cộng các tháng đã có số liệu; cột Lượt là tổng lượt. Tháng chưa có số liệu hiện "Chưa có".</div>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button class="btn btn-xls" style="padding:9px; font-size:13px;" onclick="exportHlUnitExcel()"><i class="fa-solid fa-file-excel"></i> Xuất Excel</button>
+          <button class="btn btn-doc" style="padding:9px; font-size:13px;" onclick="exportHlUnitWord()"><i class="fa-solid fa-file-word"></i> Xuất Word</button>
         </div>
       </div>
     </div>
@@ -799,6 +1073,14 @@ table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
           <div id="email-send-status" class="note" style="margin-top:8px;"></div>
         </div>
         <div class="card">
+          <h2>Lĩnh vực của các phòng (file Bộ Công an)</h2>
+          <div class="note" style="margin-bottom:10px; font-size:12.5px; line-height:1.5;">
+            Mỗi dòng là một tên lĩnh vực đúng như trong file Excel (phần sau chữ "+ Lĩnh vực:"). Không phân biệt hoa thường, dấu. Một lĩnh vực chỉ thuộc một phòng. Khi Bộ thêm, bớt hoặc đổi lĩnh vực thì sửa tại đây rồi lưu, lần import sau sẽ áp dụng.
+          </div>
+          <div id="bca-fields-editor"></div>
+          <button class="btn btn-outline" onclick="saveBcaFields()">Lưu lĩnh vực các phòng</button>
+        </div>
+        <div class="card">
           <h2>Quản lý tài khoản</h2>
           <div class="nav-item-row" onclick="showAdminSub('taikhoan')">
             <span><i class="fa-solid fa-users" style="width:20px;"></i> Danh sách tài khoản (<span id="cfg-acc-count">0</span>)</span>
@@ -826,6 +1108,12 @@ table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
           <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; padding-bottom:10px; border-bottom:1px solid var(--border);">
             <label style="display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:600; cursor:pointer;"><input type="checkbox" id="acc-select-all" onchange="toggleSelectAllAccounts(this.checked)"> Chọn tất cả</label>
             <button class="btn btn-primary" style="width:auto; padding:8px 14px; font-size:13px;" onclick="adminResetSelectedPasswords()"><i class="fa-solid fa-key"></i> Đặt lại mật khẩu (<span id="acc-selected-count">0</span>)</button>
+          </div>
+          <div class="form-group" style="margin-top:10px;"><input type="search" id="acc-search" class="form-control" placeholder="Tìm tên đơn vị, tên đăng nhập hoặc email..." oninput="domListApply('admin-account-list')"></div>
+          <div class="sort-bar" id="acc-sort-bar"><span>Sắp xếp theo:</span>
+            <button data-k="name" onclick="domListSort('admin-account-list','name',true)">Tên đơn vị <i class="fa-solid fa-sort sort-ic"></i></button>
+            <button data-k="user" onclick="domListSort('admin-account-list','user',true)">Tên đăng nhập <i class="fa-solid fa-sort sort-ic"></i></button>
+            <button data-k="email" onclick="domListSort('admin-account-list','email',true)">Email <i class="fa-solid fa-sort sort-ic"></i></button>
           </div>
           <div id="admin-account-list"></div>
         </div>
@@ -896,6 +1184,7 @@ table.dt.dt-fit .badge { padding:2px 5px; font-size:10px; white-space:nowrap; }
       <button class="nav-btn" id="anav-nhapv03" onclick="showAdminSub('nhapv03')"><i class="fa-solid fa-pen"></i>Nhập số liệu</button>
       <button class="nav-btn" id="anav-doichieu" onclick="showAdminSub('doichieu')"><i class="fa-solid fa-code-compare"></i>Đối chiếu</button>
       <button class="nav-btn" id="anav-phuluc" onclick="showAdminSub('phuluc')"><i class="fa-solid fa-file-lines"></i>Phụ lục</button>
+      <button class="nav-btn" id="anav-hailong" onclick="showAdminSub('hailong')"><i class="fa-solid fa-face-smile"></i>Hài lòng</button>
       <button class="nav-btn" id="anav-caidat" onclick="showAdminSub('caidat')"><i class="fa-solid fa-gear"></i>Cài đặt</button>
     </div>
   </div>
@@ -1136,7 +1425,7 @@ function nextMonthKey(key){ let [y,m]=key.split("-").map(Number); m++; if(m>12){
 function showUserSub(name){
     document.querySelectorAll('.user-sub').forEach(s=>s.classList.remove('active'));
     document.getElementById('user-'+name).classList.add('active');
-    ['home','input','cumulative','rank','account'].forEach(n=>{
+    ['home','input','cumulative','rank','hailong','account'].forEach(n=>{
         const btn = document.getElementById('unav-'+n);
         if (btn) btn.classList.toggle('active', n===name);
     });
@@ -1144,6 +1433,7 @@ function showUserSub(name){
     if (name==='input') { populateInputMonthSelect(); loadInputForMonth(); }
     if (name==='cumulative') loadUserFiscalTab();
     if (name==='rank') initRankTab();
+    if (name==='hailong') initUserHaiLong();
     if (name==='account') loadAccountInfo();
     if (name==='reminder') loadReminderScreen();
 }
@@ -1315,6 +1605,7 @@ function exportFiscalMonthlyWord(){
         fiscalMonthlyFileBase() + '.doc');
 }
 try { if (typeof Chart !== 'undefined' && window.ChartDataLabels) { Chart.register(ChartDataLabels); Chart.defaults.set('plugins.datalabels', { display: false }); } } catch(e){ console.error('[fiscal-chart] datalabels plugin not available:', e); }
+try { if (typeof Chart !== 'undefined') { Chart.defaults.font.family = "'Inter', -apple-system, sans-serif"; } } catch(e){}
 function renderFiscalChart(startKey, uptoKey){
     try {
     if (typeof Chart === 'undefined'){
@@ -1389,6 +1680,7 @@ function onFiscalUptoMonthChange(){
     renderFiscalForSelection();
 }
 function loadUserHome(){
+    loadHomeHaiLong();
     showLoading(true);
     Promise.all([getUnitReports(), getUnitOfficial()]).then(([rawRows, officialMap])=>{
         showLoading(false);
@@ -1447,6 +1739,258 @@ function loadUserFiscalTab(){
         console.error('[loadUserFiscalTab] Lỗi khi tải dữ liệu:', err);
         customAlert('Không tải được dữ liệu lũy kế: ' + err.message, 'error');
     });
+}
+// ===================== MỨC ĐỘ HÀI LÒNG (người dùng) =====================
+// Dùng lại hlUnitCur / hlUnitRows / exportHlUnitExcel / exportHlUnitWord của quản trị để bảng và file xuất giống nhau.
+let uhlChart = null;
+function getUnitSatMonths(evalYear, docs){
+    const byMonth = {}; docs.forEach(r=>{ byMonth[r.monthKey] = r; });
+    const { startKey, endKey } = fiscalYearRange(monthKey(evalYear, 9));
+    const months = [];
+    for (let k = startKey, g = 0; k <= endKey && g < 12; k = nextMonthKey(k), g++){
+        const r = byMonth[k];
+        months.push({ key:k, luot: r ? (r.soLuot || 0) : undefined, q: r && typeof r.q1 !== 'undefined' ? [r.q1,r.q2,r.q3,r.q4,r.q5] : null });
+    }
+    return months;
+}
+function getUnitSatDocs(){
+    const unitId = currentUserDoc.unitId || currentUserDoc.username;
+    return db.collection('satisfaction').where('unitId','==',unitId).get().then(snap=>{ const a = []; snap.forEach(d=>a.push(d.data())); return a; });
+}
+// Mức chung của tháng (%) và chênh lệch so với tháng có số liệu liền trước (điểm %)
+function satLatestInfo(months){
+    const done = months.filter(m=>m.q);
+    if (!done.length) return null;
+    const pct = m => m.q.reduce((a,b)=>a+b,0)/5*100;
+    const last = done[done.length-1], prev = done[done.length-2];
+    return { key:last.key, val:pct(last), delta: prev ? pct(last) - pct(prev) : null };
+}
+function satDeltaHtml(d){
+    if (d === null || Math.abs(d) < 0.005) return '';
+    return `<span style="color:${d>0 ? 'var(--green-text)' : 'var(--red-text)'};">${d>0 ? '▲' : '▼'} ${Math.abs(d).toFixed(2)}</span>`;
+}
+// Mức chung toàn tỉnh từng tháng của năm đánh giá (bình quân theo số lượt, giống biểu đồ Tổng quan của quản trị)
+function getProvinceSatByMonth(evalYear){
+    const { startKey, endKey } = fiscalYearRange(monthKey(evalYear, 9));
+    return db.collection('satisfaction').where('monthKey','>=',startKey).where('monthKey','<=',endKey).get().then(snap=>{
+        const acc = {};
+        snap.forEach(d=>{
+            const r = d.data();
+            if (typeof r.q1 === 'undefined' || !(r.soLuot > 0)) return;
+            const a = acc[r.monthKey] = acc[r.monthKey] || { w:0, sum:0 };
+            a.w += r.soLuot; a.sum += r.soLuot * (r.q1 + r.q2 + r.q3 + r.q4 + r.q5) / 5 * 100;
+        });
+        const out = {}; Object.keys(acc).forEach(k=>{ out[k] = acc[k].sum / acc[k].w; });
+        return out;
+    });
+}
+function setUhlPanel(w){
+    document.getElementById('uhl-panel-own').style.display = w==='own' ? '' : 'none';
+    document.getElementById('uhl-panel-rank').style.display = w==='rank' ? '' : 'none';
+    document.getElementById('uhl-tab-own').classList.toggle('active', w==='own');
+    document.getElementById('uhl-tab-rank').classList.toggle('active', w==='rank');
+    if (w==='rank') initUhrTab(); else if (uhlChart) uhlChart.resize();
+}
+function initUserHaiLong(){
+    const yearSel = document.getElementById('uhl-year-select');
+    if (!yearSel.options.length){
+        const curYear = fiscalYearRange(currentReportingMonthKey()).evalYear;
+        let html = '';
+        for (let i=0; i<=ADMIN_EVAL_YEARS_BACK; i++) html += `<option value="${curYear-i}">${adminEvalYearLabel(curYear-i)}</option>`;
+        yearSel.innerHTML = html;
+        yearSel.value = curYear;
+    }
+    loadUserHaiLong();
+}
+function loadUserHaiLong(){
+    const evalYear = Number(document.getElementById('uhl-year-select').value);
+    showLoading(true);
+    Promise.all([getUnitSatDocs(), getProvinceSatByMonth(evalYear).catch(err=>{ console.error('[uhl-province]', err); return null; })]).then(([docs, prov])=>{
+        showLoading(false);
+        const months = getUnitSatMonths(evalYear, docs);
+        hlUnitCur = { name: currentUserDoc.unitName, evalYear, months };
+        const done = months.filter(m=>m.q);
+        const na = '<span style="color:var(--text-muted); font-style:italic;">Chưa có</span>';
+        document.getElementById('uhl-body').innerHTML = hlUnitRows().map((c,i,arr)=>{
+            const last = i === arr.length - 1, has = c[2] !== '';
+            const b = t => last ? `<b>${t}</b>` : t;
+            const lbl = last ? c[0] : c[0].replace('Tháng ','T');
+            return has
+                ? `<tr><td style="text-align:left;">${b(lbl)}</td>${c.slice(1).map((v,j)=>`<td>${b(j===0 ? fmtInt(v) : v.replace('%',''))}</td>`).join('')}</tr>`
+                : `<tr><td style="text-align:left;">${b(lbl)}</td><td colspan="7" style="font-style:italic; color:var(--text-muted);">Chưa có</td></tr>`;
+        }).join('');
+        if (done.length){
+            const avg = done.reduce((t,m)=>t + m.q.reduce((a,b)=>a+b,0)/5, 0) / done.length * 100;
+            document.getElementById('uhl-avg').innerText = avg.toFixed(2) + '%';
+            document.getElementById('uhl-avg-note').innerText = `Trung bình ${done.length} tháng đã có số liệu`;
+        } else {
+            document.getElementById('uhl-avg').innerText = '--';
+            document.getElementById('uhl-avg-note').innerText = 'Chưa có số liệu hài lòng trong năm đánh giá này';
+        }
+        const info = satLatestInfo(months);
+        document.getElementById('uhl-latest').innerText = info ? info.val.toFixed(2) + '%' : '--';
+        document.getElementById('uhl-latest-lbl').innerHTML = info ? `${monthLabel(info.key)} ${satDeltaHtml(info.delta)}` : 'Tháng mới nhất';
+        document.getElementById('uhl-luot').innerText = fmtInt(months.reduce((t,m)=>t+(m.luot||0),0));
+        const vals = months.map(m=> m.q ? m.q.reduce((a,b)=>a+b,0)/5*100 : null);
+        const provVals = months.map(m=> prov && typeof prov[m.key] !== 'undefined' ? prov[m.key] : null);
+        const cmpBox = document.getElementById('uhl-cmp-box');
+        const both = months.map((m,i)=>({ m, u:vals[i], p:provVals[i] })).filter(x=>x.u !== null && x.p !== null);
+        cmpBox.style.display = both.length ? '' : 'none';
+        if (both.length){
+            const dHtml = d => `<span style="color:${d>=0 ? 'var(--green-text)' : 'var(--red-text)'};">${d>=0 ? '+' : ''}${d.toFixed(2)}</span>`;
+            const mu = both.reduce((t,x)=>t+x.u,0)/both.length, mp = both.reduce((t,x)=>t+x.p,0)/both.length;
+            document.getElementById('uhl-cmp-body').innerHTML = both.map(x=>`<tr><td style="text-align:left;">${monthLabel(x.m.key).replace('Tháng ','T')}</td><td>${x.u.toFixed(2)}</td><td>${x.p.toFixed(2)}</td><td>${dHtml(x.u-x.p)}</td></tr>`).join('')
+                + `<tr style="font-weight:700;"><td style="text-align:left;">Trung bình</td><td>${mu.toFixed(2)}</td><td>${mp.toFixed(2)}</td><td>${dHtml(mu-mp)}</td></tr>`;
+            document.getElementById('uhl-avg-note').innerText += ` · Toàn tỉnh cùng các tháng: ${mp.toFixed(2)}%`;
+        }
+        if (typeof Chart === 'undefined') return;
+        const present = vals.concat(provVals).filter(v=>v !== null);
+        const yMin = present.length ? Math.max(0, Math.floor((Math.min(...present) - 2) / 5) * 5) : 0;
+        if (uhlChart){ uhlChart.destroy(); uhlChart = null; }
+        uhlChart = new Chart(document.getElementById('uhl-chart'), {
+            type: 'bar',
+            data: { labels: months.map(m=>monthLabel(m.key).replace('Tháng ','T')), datasets: [
+                { label:'Đơn vị', data: vals, backgroundColor: '#38bdf8', borderRadius: 5, maxBarThickness: 26 },
+                { type:'line', label:'Toàn tỉnh', data: provVals, borderColor:'#fbbf24', backgroundColor:'#fbbf24', borderWidth:2, pointRadius:3, tension:0.25, spanGaps:false, clip:false, datalabels:{ display:false } }
+            ] },
+            options: {
+                layout: { padding: { top: 18 } },
+                plugins: {
+                    legend: { display: !!prov, position:'bottom', labels:{ boxWidth:10, font:{ size:10 } } },
+                    tooltip: { callbacks: { label: item=> item.datasetIndex === 0 ? `Đơn vị: ${item.parsed.y.toFixed(2)}% (${fmtInt(months[item.dataIndex].luot)} lượt)` : `Toàn tỉnh: ${item.parsed.y.toFixed(2)}%` } },
+                    datalabels: { display: ctx=> ctx.datasetIndex === 0 && vals[ctx.dataIndex] !== null, anchor:'end', align:'end', offset:1, color:'#e6f1ff', font:{ weight:'700', size:8.5 }, formatter: v=> v.toFixed(1) }
+                },
+                scales: {
+                    y: { min: yMin, max: 100, ticks:{ callback:v=>v+'%', font:{size:10} }, grid:{ color:'rgba(148,163,184,0.15)' } },
+                    x: { ticks:{ font:{size:10} }, grid:{ display:false } }
+                },
+                responsive: true, maintainAspectRatio: false
+            }
+        });
+    }).catch(err=>{ showLoading(false); customAlert('Không tải được mức độ hài lòng: ' + err.message, 'error'); });
+}
+// ---- Xếp hạng mức độ hài lòng giữa các đơn vị (cùng cách làm với tab Thứ hạng) ----
+let uhrMode = 'm', uhrRows = [], uhrChart = null, uhrOwnId = null;
+let uhrSort = { key: null, dir: 'desc' };
+function setUhrSort(k){ uhrSort = nextSort(uhrSort, k, k === 'name'); renderUhrRows(); }
+function fillUhrMonths(evalYear){
+    const { startKey, endKey } = fiscalYearRange(monthKey(evalYear, 9));
+    const curKey = currentReportingMonthKey();
+    let k = endKey < curKey ? endKey : curKey;
+    const opts = [];
+    while (k >= startKey){
+        opts.push(`<option value="${k}">${uhrMode==='c' ? 'Tính đến ' + monthLabel(k) + ' (' + cumulativePeriodShort(k) + ')' : monthLabel(k) + ' (' + reportingPeriodShort(k) + ')'}</option>`);
+        k = prevMonthKey(k);
+    }
+    document.getElementById('uhr-month-select').innerHTML = opts.join('');
+}
+function setUhrMode(m){
+    uhrMode = m;
+    document.getElementById('uhr-tab-m').classList.toggle('active', m==='m');
+    document.getElementById('uhr-tab-c').classList.toggle('active', m==='c');
+    const sel = document.getElementById('uhr-month-select'), keep = sel.value;
+    fillUhrMonths(Number(document.getElementById('uhr-year-select').value));
+    if (keep && Array.from(sel.options).some(o=>o.value===keep)) sel.value = keep;
+    loadUhr();
+}
+function onUhrYearChange(){ fillUhrMonths(Number(document.getElementById('uhr-year-select').value)); loadUhr(); }
+function initUhrTab(){
+    const yearSel = document.getElementById('uhr-year-select');
+    if (!yearSel.options.length){
+        const curYear = fiscalYearRange(currentReportingMonthKey()).evalYear;
+        let html = '';
+        for (let i=0; i<=ADMIN_EVAL_YEARS_BACK; i++) html += `<option value="${curYear-i}">${adminEvalYearLabel(curYear-i)}</option>`;
+        yearSel.innerHTML = html;
+        yearSel.value = curYear;
+        fillUhrMonths(curYear);
+    }
+    loadUhr();
+}
+function loadUhr(){
+    const mKey = document.getElementById('uhr-month-select').value;
+    if (!mKey) return;
+    uhrOwnId = currentUserDoc.unitId || currentUserDoc.username;
+    showLoading(true);
+    (uhrMode === 'm' ? getSatisfactionForMonth(mKey) : getSatisfactionCumulative(mKey)).then(map=>{
+        showLoading(false);
+        const rows = unitCatalog.map(u=>{
+            const d = map[u.id];
+            const chung = d && d.q ? d.q.reduce((a,b)=>a+b,0)/5*100 : undefined;
+            return { unit:u, luot: d ? d.luot : undefined, chung, v: typeof chung === 'undefined' ? undefined : Math.round(chung*100)/100 };
+        });
+        const ranked = rows.filter(r=>typeof r.v !== 'undefined').sort((a,b)=>b.v-a.v || a.unit.name.localeCompare(b.unit.name,'vi'));
+        ranked.forEach(r=>{ r.rank = 1 + ranked.filter(x=>x.v > r.v).length; });
+        const rest = rows.filter(r=>typeof r.v === 'undefined').sort((a,b)=>a.unit.name.localeCompare(b.unit.name,'vi'));
+        uhrRows = ranked.concat(rest);
+        const own = uhrRows.find(r=>r.unit.id===uhrOwnId);
+        const w = ranked.reduce((t,r)=>t+(r.luot||0),0);
+        const avg = !ranked.length ? null : (w > 0 ? ranked.reduce((t,r)=>t+r.chung*(r.luot||0),0)/w : ranked.reduce((t,r)=>t+r.chung,0)/ranked.length);
+        document.getElementById('uhr-avg').innerText = avg === null ? '--' : avg.toFixed(2) + '%';
+        if (own && typeof own.rank !== 'undefined'){
+            document.getElementById('uhr-pos').innerText = own.rank + ' / ' + ranked.length;
+            document.getElementById('uhr-own').innerText = own.chung.toFixed(2) + '%';
+            document.getElementById('uhr-sub').innerHTML = `Xếp trên ${ranked.length - own.rank} đơn vị đã có số liệu (tổng ${rows.length} đơn vị)`;
+        } else {
+            document.getElementById('uhr-pos').innerText = '--';
+            document.getElementById('uhr-own').innerText = '--';
+            document.getElementById('uhr-sub').innerHTML = '<span class="badge badge-amber">Đơn vị chưa có số liệu hài lòng để xếp hạng</span>';
+        }
+        renderUhrChart(ranked);
+        renderUhrRows();
+    }).catch(err=>{ showLoading(false); customAlert('Không tải được xếp hạng hài lòng: ' + err.message, 'error'); });
+}
+function renderUhrChart(ranked){
+    try {
+        if (typeof Chart === 'undefined') return;
+        const items = ranked.slice(0,10);
+        const own = ranked.find(r=>r.unit.id===uhrOwnId);
+        if (own && !items.includes(own)) items.push(own);
+        const short = n => n.length>28 ? n.slice(0,27)+'…' : n;
+        const xMin = items.length ? Math.max(0, Math.floor(Math.min(...items.map(r=>r.v)) - 1)) : 0;
+        if (uhrChart){ uhrChart.destroy(); uhrChart = null; }
+        uhrChart = new Chart(document.getElementById('uhr-chart'), {
+            type: 'bar',
+            data: { labels: items.map(r=>r.rank + '. ' + short(r.unit.name)), datasets: [{ data: items.map(r=>r.v), backgroundColor: items.map(r=> r.unit.id===uhrOwnId ? '#38bdf8' : '#22c55e'), borderRadius: 5, maxBarThickness: 22 }] },
+            options: {
+                indexAxis: 'y',
+                layout: { padding: { right: 46 } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: item=> item.parsed.x.toFixed(2)+'%' } },
+                    datalabels: { display: true, anchor: 'end', align: 'end', offset: 2, color: '#e6f1ff', font: { weight: '700', size: 10 }, formatter: v=>v.toFixed(2)+'%' }
+                },
+                scales: {
+                    x: { min: xMin, max: 100, ticks: { callback: v=>v+'%', font:{size:10} }, grid:{ color:'rgba(148,163,184,0.15)' } },
+                    y: { ticks: { font:{size:9.5} }, grid:{ display:false } }
+                },
+                responsive: true, maintainAspectRatio: false
+            }
+        });
+    } catch(err){ console.error('[uhr-chart]', err); }
+}
+function renderUhrRows(){
+    const q = normVi(document.getElementById('uhr-search').value.trim());
+    const na = '<span style="color:var(--text-muted); font-style:italic;">Chưa có</span>';
+    const rows = sortList(uhrRows.filter(r=>!q || normVi(r.unit.name).includes(q)), uhrSort, (r,k)=> k==='name' ? r.unit.name : (k==='rank' ? r.rank : (k==='luot' ? r.luot : r.chung)));
+    setSortIcons(document.getElementById('uhr-body').closest('table').querySelectorAll('th.sortable'), uhrSort);
+    document.getElementById('uhr-body').innerHTML = rows.length ? rows.map(r=>{
+        const isOwn = r.unit.id===uhrOwnId;
+        return `<tr${isOwn ? ' style="background:var(--blue-bg); font-weight:700;"' : ''}><td>${rankCellHtml(r.rank)}</td><td class="unit-name">${r.unit.name}${isOwn ? ' <span class="badge" style="background:var(--blue-bg); color:var(--blue-text);">Đơn vị bạn</span>' : ''}</td><td>${typeof r.luot !== 'undefined' ? fmtInt(r.luot) : na}</td><td>${typeof r.chung !== 'undefined' ? r.chung.toFixed(2) : na}</td></tr>`;
+    }).join('') : '<tr><td colspan="4" style="color:var(--text-muted); font-style:italic;">Không tìm thấy đơn vị phù hợp</td></tr>';
+}
+// Thẻ thông báo ở Trang chủ: tháng mới nhất đã có số liệu hài lòng của đơn vị (lỗi thì ẩn thẻ, không ảnh hưởng trang chủ)
+function loadHomeHaiLong(){
+    const card = document.getElementById('home-hl-card');
+    getUnitSatDocs().then(docs=>{
+        const curYear = fiscalYearRange(currentReportingMonthKey()).evalYear;
+        let info = satLatestInfo(getUnitSatMonths(curYear, docs));
+        if (!info) info = satLatestInfo(getUnitSatMonths(curYear - 1, docs));
+        if (!info){ card.style.display = 'none'; return; }
+        document.getElementById('home-hl-month').innerText = '· ' + monthLabel(info.key);
+        document.getElementById('home-hl-val').innerText = info.val.toFixed(2) + '%';
+        document.getElementById('home-hl-delta').innerHTML = satDeltaHtml(info.delta);
+        card.style.display = '';
+    }).catch(err=>{ card.style.display = 'none'; console.error('[home-hl]', err); });
 }
 // ===================== THỨ HẠNG (người dùng) =====================
 // Xếp hạng theo tỷ lệ chính thức V03 (lượt V03 ÷ tổng TTHC), cùng cách tính với Phụ lục 2/3 của quản trị.
@@ -1568,14 +2112,17 @@ function renderRankChart(ranked){
     });
     } catch(err){ console.error('[rank-chart] Lỗi vẽ biểu đồ:', err); }
 }
+let rkSort = { key: null, dir: 'desc' };
+function setRkSort(k){ rkSort = nextSort(rkSort, k, k === 'name'); renderRankRows(); }
 function renderRankRows(){
     const q = normVi(document.getElementById('rk-search').value.trim());
     const na = '<span style="color:var(--text-muted); font-style:italic;">Chưa có</span>';
-    const rows = rankRows.filter(r=>!q || normVi(r.unit.name).includes(q));
+    const rows = sortList(rankRows.filter(r=>!q || normVi(r.unit.name).includes(q)), rkSort, (r,k)=> k==='name' ? r.unit.name : k==='tyLe' ? (typeof r.rank !== 'undefined' ? r.tyLe : undefined) : r[k]);
+    setSortIcons(document.getElementById('rk-body').closest('table').querySelectorAll('th.sortable'), rkSort);
     document.getElementById('rk-body').innerHTML = rows.length ? rows.map(r=>{
         const isOwn = r.unit.id===rankOwnId;
         const hasRank = typeof r.rank !== 'undefined';
-        return `<tr${isOwn ? ' style="background:var(--blue-bg); font-weight:700;"' : ''}><td>${hasRank ? r.rank : '-'}</td><td class="unit-name unit-link" onclick="openRankUnit('${r.unit.id}')">${r.unit.name}${isOwn ? ' <span class="badge" style="background:var(--blue-bg); color:var(--blue-text);">Đơn vị bạn</span>' : ''}</td><td>${typeof r.col1 !== 'undefined' ? fmtInt(r.col1) : na}</td><td>${typeof r.col2 !== 'undefined' ? fmtInt(r.col2) : na}</td><td>${hasRank ? fmtPct(r.tyLe) : '<span style="color:var(--text-muted); font-style:italic;">Chưa đủ</span>'}</td></tr>`;
+        return `<tr${isOwn ? ' style="background:var(--blue-bg); font-weight:700;"' : ''}><td>${rankCellHtml(r.rank)}</td><td class="unit-name unit-link" onclick="openRankUnit('${r.unit.id}')">${r.unit.name}${isOwn ? ' <span class="badge" style="background:var(--blue-bg); color:var(--blue-text);">Đơn vị bạn</span>' : ''}</td><td>${typeof r.col1 !== 'undefined' ? fmtInt(r.col1) : na}</td><td>${typeof r.col2 !== 'undefined' ? fmtInt(r.col2) : na}</td><td>${hasRank ? fmtPct(r.tyLe) : '<span style="color:var(--text-muted); font-style:italic;">Chưa đủ</span>'}</td></tr>`;
     }).join('') : '<tr><td colspan="5" style="color:var(--text-muted); font-style:italic;">Không tìm thấy đơn vị phù hợp</td></tr>';
 }
 // Popup kết quả theo tháng của một đơn vị trong năm đánh giá đang chọn
@@ -1828,7 +2375,7 @@ function closeUserNotice(){ document.getElementById('user-notice-modal').style.d
 function showAdminSub(name){
     document.querySelectorAll('.admin-sub').forEach(s=>s.classList.remove('active'));
     document.getElementById('admin-'+name).classList.add('active');
-    ['tongquan','nhapv03','doichieu','phuluc','caidat','taikhoan','newaccount','editaccount'].forEach(n=>{
+    ['tongquan','nhapv03','doichieu','phuluc','hailong','caidat','taikhoan','newaccount','editaccount'].forEach(n=>{
         const btn = document.getElementById('anav-'+n);
         if (btn) btn.classList.toggle('active', n===name);
     });
@@ -1836,6 +2383,7 @@ function showAdminSub(name){
     if (name==='doichieu') renderReconcile();
     if (name==='nhapv03') loadV03Form();
     if (name==='phuluc') renderPhuLuc();
+    if (name==='hailong') renderHaiLong();
     if (name==='caidat') loadAdminConfig();
     if (name==='taikhoan') renderAdminAccountList();
 }
@@ -1844,7 +2392,8 @@ const ADMIN_PERIOD_TABS = {
     ov:  { year:'admin-ov-year-select', month:'admin-ov-month-select', reload: ()=>renderAdminOverview() },
     dc:  { year:'dc-year-select',       month:'dc-month-select',       reload: ()=>renderReconcile() },
     v03: { year:'v03-year-select',      month:'v03-month-select',      reload: ()=>loadV03Form() },
-    pl:  { year:'pl-year-select',       month:'pl-month-select',       reload: ()=>renderPhuLuc() }
+    pl:  { year:'pl-year-select',       month:'pl-month-select',       reload: ()=>renderPhuLuc() },
+    hl:  { year:'hl-year-select',       month:'hl-month-select',       reload: ()=>renderHaiLong() }
 };
 const ADMIN_EVAL_YEARS_BACK = 2;
 function adminEvalYearLabel(y){
@@ -1861,7 +2410,7 @@ function populateAdminMonths(name, evalYear){
     const curKey = currentReportingMonthKey();
     let k = endKey < curKey ? endKey : curKey;
     const opts = [];
-    while (k >= startKey){ opts.push(`<option value="${k}">${name==='pl' && currentPlTab===3 ? 'Tính đến ' + monthLabel(k) + ' (' + cumulativePeriodShort(k) + ')' : monthLabel(k) + ' (' + reportingPeriodShort(k) + ')'}</option>`); k = prevMonthKey(k); }
+    while (k >= startKey){ opts.push(`<option value="${k}">${(name==='pl' && currentPlTab===3) || (name==='hl' && currentHlTab===2) ? 'Tính đến ' + monthLabel(k) + ' (' + cumulativePeriodShort(k) + ')' : monthLabel(k) + ' (' + reportingPeriodShort(k) + ')'}</option>`); k = prevMonthKey(k); }
     document.getElementById(ADMIN_PERIOD_TABS[name].month).innerHTML = opts.join('');
 }
 function setupAdminPeriod(name){
@@ -1962,6 +2511,19 @@ function renderAdminOverview(){
         document.getElementById('ov-highest').innerText = best ? best.name + ' (' + fmtPct(best.tyLe) + ')' : '-';
         document.getElementById('ov-lowest').innerText = worst ? worst.name + ' (' + fmtPct(worst.tyLe) + ')' : '-';
 
+        const numSum = (arr, f) => arr.reduce((s,x)=> s + (typeof f(x) === 'number' ? f(x) : 0), 0);
+        document.getElementById('ov-sum-luot-m').innerText = fmtInt(numSum(officialRows, r=>r.soLuotChinhThuc));
+        document.getElementById('ov-sum-tthc-m').innerText = fmtInt(numSum(reportRows, r=>r.tongTTHC));
+        ['luot-c','tthc-c'].forEach(id=>document.getElementById('ov-sum-' + id).innerText = '-');
+        document.getElementById('ov-sum-scope').innerText = '';
+        Promise.all([getReportsCumulative(mKey), getOfficialCumulative(mKey)]).then(([repMap, offMap])=>{
+            if (lastOvMonthKey !== mKey) return;
+            const offVals = Object.values(offMap), repVals = Object.values(repMap);
+            document.getElementById('ov-sum-luot-c').innerText = fmtInt(offVals.reduce((s,v)=>s+(v||0),0));
+            document.getElementById('ov-sum-tthc-c').innerText = fmtInt(repVals.reduce((s,v)=>s+(v.tongTTHC||0),0));
+            document.getElementById('ov-sum-scope').innerText = `Tháng: cộng trên ${officialRows.length}/${total} đơn vị có số lượt V03 và ${reportRows.filter(r=>typeof r.tongTTHC === 'number').length}/${total} đơn vị có Tổng TTHC. Lũy kế: ${cumulativePeriodShort(mKey)}.`;
+        });
+
         renderOverviewYearChart(mKey);
     });
 }
@@ -1985,6 +2547,18 @@ function ovCellHtml(c, v){
     if (c.t === 'kq') return badgeHtml(v === 'Đạt');
     return ovCellText(c, v);
 }
+let ovListSort = { key: null, dir: 'desc' };
+function setOvListSort(k){ ovListSort = nextSort(ovListSort, k, ['text','kq'].includes(ovListCur.cols[+k.slice(1)].t)); renderOvListRows(); }
+function renderOvListRows(){
+    const c = ovListCur; if (!c) return;
+    const q = normVi(document.getElementById('ov-list-search').value.trim());
+    const items = sortList(c.data.filter(row=>!q || normVi(row[0]).includes(q)), ovListSort, (row,k)=>{ const v = row[+k.slice(1)]; return v == null || v === '' ? undefined : v; });
+    document.getElementById('ov-list-head').innerHTML = '<tr>' + c.cols.map((col,i)=>`<th class="sortable" data-k="c${i}" onclick="setOvListSort('c${i}')"${col.w ? ` style="width:${col.w}%"` : ''}>${col.l} <i class="fa-solid fa-sort sort-ic"></i></th>`).join('') + '</tr>';
+    setSortIcons(document.querySelectorAll('#ov-list-head th.sortable'), ovListSort);
+    document.getElementById('ov-list-body').innerHTML = items.length
+        ? items.map(row=>'<tr>' + row.map((v,i)=>`<td${i===0 ? ' class="unit-name"' : ''}>${ovCellHtml(c.cols[i], v)}</td>`).join('') + '</tr>').join('')
+        : `<tr><td colspan="${c.cols.length}" style="color:var(--text-muted); font-style:italic;">${c.data.length ? 'Không tìm thấy đơn vị phù hợp' : 'Không có đơn vị nào'}</td></tr>`;
+}
 function openOvList(kind){
     const rows = lastOvRows;
     if (!rows.length) return;
@@ -1992,8 +2566,8 @@ function openOvList(kind){
     let cols, data, sub;
     if (kind === 'reported'){
         const list = rows.filter(x=>isReportDone(x.r));
-        sub = `${mLabel} · ${list.length}/${rows.length} đơn vị đã nhập đủ số lượt đánh giá và Tổng TTHC (số liệu đơn vị tự báo cáo)`;
-        cols = [{l:'Đơn vị',t:'text'}, {l:'Lượt đánh giá',t:'int',w:17}, {l:'Tổng TTHC',t:'int',w:17}, {l:'Tỷ lệ',t:'pct',w:16}];
+        sub = `${mLabel} · ${list.length}/${rows.length} đơn vị đã nhập đủ số lượt đánh giá và Tổng TTHC. Đây là số ĐƠN VỊ TỰ BÁO CÁO, chỉ dùng đối chiếu, không phải tỷ lệ chính thức (tỷ lệ chính thức tính từ số lượt V03).`;
+        cols = [{l:'Đơn vị',t:'text'}, {l:'Lượt báo cáo',t:'int',w:17}, {l:'Tổng TTHC',t:'int',w:17}, {l:'Tỷ lệ báo cáo',t:'pct',w:16}];
         data = list.map(x=>[x.unit.name, x.r.soLuot, x.r.tongTTHC, x.r.tongTTHC>0 ? x.r.soLuot/x.r.tongTTHC*100 : 0]);
     } else if (kind === 'dat'){
         const list = rows.filter(x=>x.r && typeof x.off !== 'undefined').map(x=>({ x, tyLe: x.r.tongTTHC>0 ? x.off/x.r.tongTTHC*100 : 0 }));
@@ -2010,10 +2584,9 @@ function openOvList(kind){
     ovListCur = { kind, cols, data, sub };
     document.getElementById('ov-list-title').innerText = OV_LIST_KINDS[kind].title;
     document.getElementById('ov-list-sub').innerText = sub;
-    document.getElementById('ov-list-head').innerHTML = '<tr>' + cols.map(c=>`<th${c.w ? ` style="width:${c.w}%"` : ''}>${c.l}</th>`).join('') + '</tr>';
-    document.getElementById('ov-list-body').innerHTML = data.length
-        ? data.map(row=>'<tr>' + row.map((v,i)=>`<td${i===0 ? ' class="unit-name"' : ''}>${ovCellHtml(cols[i], v)}</td>`).join('') + '</tr>').join('')
-        : `<tr><td colspan="${cols.length}" style="color:var(--text-muted); font-style:italic;">Không có đơn vị nào</td></tr>`;
+    ovListSort = { key: null, dir: 'desc' };
+    document.getElementById('ov-list-search').value = '';
+    renderOvListRows();
     document.getElementById('ov-list-modal').style.display = '';
 }
 // --------- ĐỊNH DẠNG FILE XUẤT (dùng chung) ---------
@@ -2065,7 +2638,7 @@ async function downloadStyledExcel({ sheet, filename, title, sub, headers, rows,
         row.forEach((v,k)=>{
             const cell = wr.getCell(k+1);
             cell.value = (v === '' || v === undefined) ? null : v;
-            const isLast = boldLast && ri === rows.length - 1;
+            const isLast = boldLast && ri >= rows.length - (boldLast === true ? 1 : boldLast);
             cell.font = font(isLast ? { bold:true } : {});
             if (isLast) cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFDDEBF7'} };
             cell.border = border;
@@ -2081,14 +2654,14 @@ async function downloadStyledExcel({ sheet, filename, title, sub, headers, rows,
     link.download = filename;
     document.body.appendChild(link); link.click(); document.body.removeChild(link);
 }
-function styledWordBody({ sub, headers, rows, leftCols=[0], boldLast=false }){
+function styledWordBody({ sub, headers, rows, leftCols=[0], boldLast=false, numW=15 }){
     const others = headers.filter((h,i)=>!leftCols.includes(i));
-    const fixedW = others.map(h=>h === 'STT' ? 10 : 15);
+    const fixedW = others.map(h=>h === 'STT' ? 10 : numW);
     const leftW = (100 - fixedW.reduce((t,x)=>t+x, 0)) / leftCols.length;
     let oi = 0;
     const widths = headers.map((h,i)=> leftCols.includes(i) ? leftW : fixedW[oi++]);
     const head = '<tr>' + headers.map((h,i)=>`<th width="${widths[i]}%" style="width:${widths[i]}%; border:1px solid #000; padding:5px 4px; background:#1F4E79; color:#fff; text-align:center;${h === 'STT' ? ' white-space:nowrap;' : ''}">${h}</th>`).join('') + '</tr>';
-    const body = rows.map((row,ri)=>'<tr>' + row.map((v,k)=>`<td style="border:1px solid #000; padding:3px 4px;${boldLast && ri === rows.length-1 ? ' font-weight:bold; background:#DDEBF7;' : ''} text-align:${leftCols.includes(k) ? 'left' : 'center'};">${v == null ? '' : (typeof v === 'number' && headers[k] !== 'STT' ? fmtInt(v) : v)}</td>`).join('') + '</tr>').join('');
+    const body = rows.map((row,ri)=>'<tr>' + row.map((v,k)=>`<td style="border:1px solid #000; padding:3px 4px;${boldLast && ri >= rows.length - (boldLast === true ? 1 : boldLast) ? ' font-weight:bold; background:#DDEBF7;' : ''} text-align:${leftCols.includes(k) ? 'left' : 'center'};">${v == null ? '' : (typeof v === 'number' && headers[k] !== 'STT' ? fmtInt(v) : v)}</td>`).join('') + '</tr>').join('');
     return `<style>@page{size:A4; margin:2cm 1.5cm;} body{font-family:'Times New Roman',serif; font-size:13pt;} h3{text-align:center; font-size:15pt; margin:0 0 8pt;} p.sub{margin:0 0 10pt; font-style:italic;} td p{margin:0;} table{width:100%; border-collapse:collapse; font-size:12pt;} tr{page-break-inside:avoid;} th{font-weight:bold;}</style>${sub ? `<p class="sub">${sub}</p>` : ''}<table width="100%"><colgroup>${widths.map(w=>`<col width="${w}%" style="width:${w}%">`).join('')}</colgroup>${head}${body}</table>`;
 }
 function ovExportRows(c){ return c.data.map((row,i)=>[i+1, ...row.map((v,j)=>ovCellText(c.cols[j], v))]); }
@@ -2108,6 +2681,7 @@ function exportOvListWord(){
 }
 function closeOvList(){ document.getElementById('ov-list-modal').style.display = 'none'; }
 function renderOverviewYearChart(mKey){
+    renderOverviewSatisfactionChart(mKey);
     const months = [];
     for (let k = fiscalYearRange(mKey).startKey; k <= mKey; k = nextMonthKey(k)) months.push(k);
     Promise.all(months.map(k => Promise.all([getReportsForMonth(k), getOfficialForMonth(k)]))).then(results=>{
@@ -2122,9 +2696,50 @@ function renderOverviewYearChart(mKey){
         ovChartInstance = new Chart(ctx, {
             type:'bar',
             data: { labels: months.map(k=>'T'+parseInt(k.split('-')[1])), datasets:[{ data: dataPoints, backgroundColor:'#2563eb', borderRadius:6 }] },
-            options: { plugins:{legend:{display:false}}, scales:{ y:{ min:0, max:100, ticks:{callback:v=>v+'%'} } }, responsive:true, maintainAspectRatio:false }
+            options: { layout:{ padding:{ top:18 } },
+                plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:i=>i.parsed.y.toFixed(1)+'%' } },
+                    datalabels:{ display:c=>c.dataset.data[c.dataIndex] > 0, anchor:'end', align:'end', offset:0, color:'#e6f1ff', font:{ weight:'700', size:9 }, formatter:v=>v.toFixed(0)+'%' } },
+                scales:{ y:{ min:0, suggestedMax:100, ticks:{callback:v=>v+'%'} } }, responsive:true, maintainAspectRatio:false }
         });
     });
+}
+// Phản hồi khi bấm Xuất Excel/Word: nút đổi chữ + sáng lên ~1,6 giây để biết lệnh đã được nhận
+document.addEventListener('click', function(e){
+    const b = e.target.closest('.btn-xls, .btn-doc');
+    if (!b || b.dataset.busy) return;
+    const old = b.innerHTML;
+    b.dataset.busy = '1'; b.classList.add('done');
+    b.innerHTML = '<i class="fa-solid fa-check"></i> Đang tải ' + (b.classList.contains('btn-xls') ? 'Excel' : 'Word') + '…';
+    setTimeout(function(){ b.innerHTML = old; b.classList.remove('done'); delete b.dataset.busy; }, 1600);
+});
+let ovHlChartInstance = null;
+// Mức độ hài lòng chung toàn tỉnh từng tháng của năm đánh giá (từ đầu năm đến tháng đang chọn)
+function renderOverviewSatisfactionChart(mKey){
+    const { startKey } = fiscalYearRange(mKey);
+    const months = [];
+    for (let k = startKey; k <= mKey; k = nextMonthKey(k)) months.push(k);
+    db.collection('satisfaction').get().then(snap=>{
+        const acc = {}; months.forEach(k=>{ acc[k] = { w:0, sum:0 }; });
+        snap.forEach(d=>{
+            const r = d.data();
+            if (!acc[r.monthKey] || typeof r.q1 === 'undefined' || !(r.soLuot > 0)) return;
+            acc[r.monthKey].w += r.soLuot;
+            acc[r.monthKey].sum += r.soLuot * (r.q1 + r.q2 + r.q3 + r.q4 + r.q5) / 5 * 100;
+        });
+        const data = months.map(k=>acc[k].w > 0 ? acc[k].sum / acc[k].w : null);
+        const have = data.filter(v=>v !== null);
+        const lo = have.length ? Math.max(0, Math.floor(Math.min(...have)) - 1) : 90;
+        const ctx = document.getElementById('ov-hl-chart');
+        if (ovHlChartInstance) ovHlChartInstance.destroy();
+        ovHlChartInstance = new Chart(ctx, {
+            type:'line',
+            data: { labels: months.map(k=>'T'+parseInt(k.split('-')[1])), datasets:[{ data, borderColor:'#22c55e', backgroundColor:'#22c55e', pointRadius:4, tension:0.25, spanGaps:false, clip:false }] },
+            options: { layout:{ padding:{ top:20, right:14 } },
+                plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:i=>i.parsed.y.toFixed(2)+'%' } },
+                    datalabels:{ display:c=>c.dataset.data[c.dataIndex] !== null, anchor:'end', align:'top', offset:2, color:'#e6f1ff', font:{ weight:'700', size:9 }, formatter:v=>v.toFixed(2) } },
+                scales:{ y:{ min:lo, max:100, ticks:{callback:v=>v+'%'} } }, responsive:true, maintainAspectRatio:false }
+        });
+    }).catch(err=>console.error('[ov-hl-chart]', err));
 }
 
 // --------- ĐỐI CHIẾU SỐ LIỆU (PHỤ LỤC 1) ---------
@@ -2137,7 +2752,7 @@ function renderReconcile(){
         const officialByUnit = {}; officialRows.forEach(r=>officialByUnit[r.unitId]=r.soLuotChinhThuc);
         const rows = [];
         reportRows.forEach(r=>{
-            if (typeof officialByUnit[r.unitId] === 'undefined') return;
+            if (typeof officialByUnit[r.unitId] === 'undefined' || typeof r.soLuot !== 'number') return;   // cần cả V03 chính thức và số lượt đơn vị tự báo cáo
             const v03 = officialByUnit[r.unitId];
             const diff = r.soLuot - v03;
             const diffPct = v03>0 ? Math.abs(diff)/v03*100 : (diff===0?0:100);
@@ -2205,14 +2820,15 @@ function renderV03MissingList(){
         document.getElementById('v03-complete-note').style.display = missing.length ? 'none' : '';
         document.getElementById('v03-missing-card').style.display = missing.length ? '' : 'none';
         document.getElementById('v03-missing-list').innerHTML = missing.map(u=>`
-            <div class="list-row"><span class="title" style="font-weight:500;">${u.name}</span><span class="badge badge-amber">Chưa có</span></div>
+            <div class="list-row" data-name="${u.name}" data-s="${normVi(u.name)}"><span class="title" style="font-weight:500;">${u.name}</span><span class="badge badge-amber">Chưa có</span></div>
         `).join('');
+        domListApply('v03-missing-list');
         document.getElementById('v03-missing-count').innerText = '(' + missing.length + ')';
         applyV03MissingToggle();
     });
 }
 function applyV03MissingToggle(){
-    document.getElementById('v03-missing-list').style.display = document.getElementById('v03-missing-toggle').checked ? '' : 'none';
+    document.getElementById('v03-missing-wrap').style.display = document.getElementById('v03-missing-toggle').checked ? '' : 'none';
 }
 function saveOfficialV03(){
     triggerHaptic();
@@ -2258,15 +2874,16 @@ function saveAdminTongTTHC(unitId, unitName, mKey, tongTTHC){
     const reportRef = db.collection('reports').doc(unitId+'_'+mKey);
     return reportRef.get().then(doc=>{
         const existing = doc.exists ? doc.data() : {};
-        const soLuot = typeof existing.soLuot === 'number' ? existing.soLuot : 0;
-        const tyLe = tongTTHC>0 ? soLuot/tongTTHC*100 : 0;
-        return reportRef.set({
-            unitId, unitName, monthKey: mKey,
-            soLuot, tongTTHC, tyLe, dat: tyLe>=60,
+        // Admin chỉ nhập hộ Tổng số TTHC. KHÔNG tự điền số lượt đơn vị báo cáo (nếu đơn vị chưa báo cáo thì để trống,
+        // tránh bị hiểu nhầm là đơn vị báo cáo 0 lượt trong tab Đối chiếu). tyLe/dat (theo số đơn vị báo cáo) chỉ tính khi đơn vị đã tự nhập lượt.
+        const data = {
+            unitId, unitName, monthKey: mKey, tongTTHC,
             submittedBy: existing.submittedBy || currentUserDoc.username,
             updatedBy: currentUserDoc.username,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
+        };
+        if (typeof existing.soLuot === 'number'){ const tyLe = tongTTHC>0 ? existing.soLuot/tongTTHC*100 : 0; data.tyLe = tyLe; data.dat = tyLe>=60; }
+        return reportRef.set(data, { merge: true });
     });
 }
 function exportV03Template(){
@@ -2364,6 +2981,423 @@ function runV03Import(){
     reader.readAsBinaryString(v03ImportFile);
 }
 
+// ===================== IMPORT FILE BỘ CÔNG AN (V03 + MỨC ĐỘ HÀI LÒNG) =====================
+// Xã/phường: lấy số liệu ngay ở dòng đơn vị. 5 phòng: cộng từ các dòng "+ Lĩnh vực" nằm dưới dòng "Lĩnh vực cấp tỉnh, thành phố"
+// (lượt = tổng lượt các lĩnh vực; mức độ hài lòng = bình quân theo số lượt của từng lĩnh vực).
+// Bảng dưới đây chỉ là MẶC ĐỊNH (dùng khi admin chưa lưu cấu hình). Muốn đổi thì vào Cài đặt › Lĩnh vực của các phòng, không cần sửa code.
+// Lĩnh vực không thuộc phòng nào sẽ không được tính cho phòng nào (có cảnh báo khi import).
+const BCA_PHONG_LINH_VUC_MAC_DINH = {
+    'Phòng Hồ sơ nghiệp vụ': ['Lý lịch tư pháp'],
+    'Phòng Cảnh sát quản lý hành chính về trật tự xã hội': ['Quản lý căn cước công dân', 'Quản lý ngành, nghề đầu tư kinh doanh có điều kiện về ANTT', 'Quản lý pháo', 'Quản lý vũ khí, vật liệu nổ, công cụ hỗ trợ', 'Quản lý vũ khí, vật liệu nổ, công cụ hỗ trợ và pháo', 'Đăng ký, quản lý con dấu', 'Đăng ký, quản lý cư trú', 'Định danh và xác thực điện tử'],
+    'Phòng Cảnh sát phòng cháy, chữa cháy và cứu nạn, cứu hộ': ['Phòng cháy, chữa cháy'],
+    'Phòng Cảnh sát giao thông': ['Sát hạch, cấp Giấy phép lái xe', 'Đăng ký, quản lý phương tiện giao thông đường bộ'],
+    'Phòng Quản lý xuất nhập cảnh': ['Quản lý Xuất nhập cảnh']
+};
+// Cấu hình {unitId: [tên lĩnh vực]} lưu ở config/bcaFields; chưa có thì dùng mặc định.
+function defaultBcaFieldMap(){
+    const m = {};
+    unitCatalog.forEach(u=>{ if (BCA_PHONG_LINH_VUC_MAC_DINH[u.name]) m[u.id] = BCA_PHONG_LINH_VUC_MAC_DINH[u.name].slice(); });
+    return m;
+}
+function loadBcaFieldMap(){
+    return db.collection('config').doc('bcaFields').get().then(doc=> (doc.exists && doc.data().byUnit) ? doc.data().byUnit : defaultBcaFieldMap());
+}
+function parseBcaFile(rows, fieldMap){
+    const tm = normVi(String((rows[0] && rows[0][0]) || '')).match(/thang\s*(\d{1,2})\s*\/\s*(\d{4})/);
+    const fileMonthKey = tm ? monthKey(Number(tm[2]), Number(tm[1])) : null;
+    const unitByName = {}, unitById = {};
+    unitCatalog.forEach(u=>{ unitByName[normVi(u.name)] = u; unitById[u.id] = u; });
+    // Tên lĩnh vực Bộ hay sửa dấu câu / thêm bớt chữ: so khớp bỏ dấu, bỏ dấu câu; nếu vẫn lệch thì chọn tên gần giống nhất (>= 80% từ trùng).
+    const fieldKey = t => normVi(String(t || '')).replace(/[^a-z0-9]+/g, ' ').trim();
+    const phongByField = {}, fieldEntries = [];
+    Object.keys(fieldMap).forEach(uid=>{ if (unitById[uid]) (fieldMap[uid] || []).forEach(f=>{
+        const k = fieldKey(f); phongByField[k] = unitById[uid]; fieldEntries.push({ tokens: k.split(' '), name: f, phong: unitById[uid] });
+    }); });
+    function findPhong(rawName){
+        const k = fieldKey(rawName);
+        if (phongByField[k]) return { phong: phongByField[k] };
+        const t = k.split(' ');
+        const scored = fieldEntries.map(e=>({ e, s: 2 * t.filter(x=>e.tokens.includes(x)).length / (t.length + e.tokens.length) })).sort((a,b)=>b.s - a.s);
+        const best = scored[0];
+        if (!best || best.s < 0.8) return null;
+        const rival = scored.find(x=>x.e.phong !== best.e.phong);
+        if (rival && best.s - rival.s < 0.05) return null; // giống nhiều phòng ngang nhau: không đoán
+        return { phong: best.e.phong, like: best.e.name, fuzzy: true };
+    }
+    // Tìm cột theo TÊN tiêu đề (Bộ đổi số câu hỏi / thứ tự cột giữa các tháng): "Câu hỏi 1..5" và "Số lượt đánh giá".
+    // Chỉ dùng câu 1–5; nếu file có thêm câu 6, 7... thì bỏ qua.
+    const hIdx = rows.slice(0, 6).findIndex(r=>(r || []).some(c=>/ten don vi/.test(normVi(String(c || '')))));
+    if (hIdx < 0) throw new Error('không tìm thấy dòng tiêu đề (cột "Tên đơn vị")');
+    const headers = rows[hIdx].map(c=>normVi(String(c || '')).replace(/\s+/g, ' '));
+    const cLuot = headers.findIndex(h=>h.indexOf('so luot danh gia') === 0);
+    const cQ = [1,2,3,4,5].map(k=>headers.findIndex(h=>new RegExp('cau hoi ' + k + '$').test(h)));
+    if (cLuot < 0) throw new Error('không tìm thấy cột "Số lượt đánh giá"');
+    if (cQ.some(c=>c < 0)) throw new Error('không tìm thấy đủ các cột "Mức độ hài lòng Câu hỏi 1" đến "Câu hỏi 5"');
+    const byUnit = {}, unmatched = [], unmappedFields = [], fuzzyFields = [];
+    let sawTinh = false;
+    let mode = null; // null: bỏ qua | 'tinh': đang ở khối lĩnh vực cấp tỉnh | object: xã/phường đang đọc
+    rows.slice(hIdx + 1).forEach(r=>{
+        const label = String(r[1] || '').trim();
+        if (!label) return;
+        const n = normVi(label);
+        const num = i => Number(r[i]) || 0;
+        if (label.charAt(0) === '+'){
+            if (mode !== 'tinh') return;
+            const hit = findPhong(n.replace(/^\+\s*linh vuc\s*:\s*/, ''));
+            const shortName = label.replace(/^\+\s*Lĩnh vực\s*:\s*/i, '');
+            if (!hit){ unmappedFields.push({ name: shortName, luot: num(cLuot) }); return; }
+            const phong = hit.phong;
+            if (hit.fuzzy) fuzzyFields.push({ name: shortName, like: hit.like, phong: phong.name });
+            const b = byUnit[phong.id] = byUnit[phong.id] || { unit: phong, luot: 0, sums: [0,0,0,0,0] };
+            b.luot += num(cLuot);
+            for (let k=0; k<5; k++) b.sums[k] += num(cQ[k]) * num(cLuot);
+            return;
+        }
+        if (String(r[0]).trim() === '1'){ mode = null; return; }          // dòng tổng toàn tỉnh
+        if (/^(linh vuc\s+)?cap tinh/.test(n)){ mode = 'tinh'; sawTinh = true; return; }   // "Lĩnh vực cấp tỉnh, thành phố" (tháng 6) hoặc "Cấp tỉnh/thành phố" (tháng 4)
+        const u = unitByName[n.replace(/\s*,\s*tinh tuyen quang\s*$/, '')];
+        if (!u){ unmatched.push(label); mode = null; return; }
+        mode = u;
+        byUnit[u.id] = { unit: u, luot: num(cLuot), sums: [0,1,2,3,4].map(k=>num(cQ[k]) * num(cLuot)) };
+    });
+    const items = unitCatalog.filter(u=>byUnit[u.id]).map(u=>{
+        const b = byUnit[u.id];
+        return { unit: u, luot: b.luot, q: b.luot > 0 ? b.sums.map(x=>x / b.luot) : null };
+    });
+    const phongMissing = unitCatalog.filter(u=>normVi(u.name).indexOf('phong ') === 0 && !byUnit[u.id]).map(u=>u.name);
+    const qOver = items.some(it=>it.q && it.q.some(v=>v > 1.0001));
+    return { monthKey: fileMonthKey, items, unmatched, unmappedFields, fuzzyFields, sawTinh, phongMissing, qOver, missing: unitCatalog.filter(u=>!byUnit[u.id]).map(u=>u.name) };
+}
+// Hộp kiểm tra trước khi import: nêu những gì phần mềm chưa chắc chắn để admin xử lý ngay (gán lĩnh vực mới cho phòng, ghi nhớ cho các tháng sau).
+let bcaReviewResolve = null;
+function closeBcaReview(ok){
+    document.getElementById('bca-review-modal').style.display = 'none';
+    const r = bcaReviewResolve; bcaReviewResolve = null;
+    if (r) r(ok ? true : null);
+}
+function bcaReview(res, fieldMap){
+    return new Promise(resolve=>{
+        const esc = t => String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+        const phongs = bcaPhongUnits();
+        const phongIds = new Set(phongs.map(u=>u.id));
+        const box = (color, title, inner) => `<div style="border-left:3px solid ${color}; padding:4px 0 4px 8px; margin:8px 0;"><b style="color:${color};">${title}</b><div>${inner}</div></div>`;
+        const critical = [];
+        if (!res.sawTinh) critical.push('Không tìm thấy dòng đánh dấu khối 5 phòng (dạng "Cấp tỉnh/thành phố" hoặc "Lĩnh vực cấp tỉnh, thành phố"). 5 phòng sẽ KHÔNG có số liệu. Có thể Bộ đã đổi tên dòng này, cần báo để cập nhật phần mềm.');
+        if (res.qOver) critical.push('Có mức độ hài lòng vượt 100%. File có thể đã đổi cách ghi số (ví dụ 99,5 thay vì 0,995). Kiểm tra lại file trước khi import.');
+        let html = `<div>File số liệu <b>${monthLabel(res.monthKey)}</b>: khớp <b>${res.items.length}/${unitCatalog.length}</b> đơn vị.</div>`;
+        html += `<div class="note" style="margin:6px 0;">` + phongs.map(u=>{ const it = res.items.find(x=>x.unit.id === u.id); return `${esc(u.name)}: <b>${it ? fmtInt(it.luot) + ' lượt' : 'chưa có'}</b>`; }).join('<br>') + `</div>`;
+        if (critical.length) html += box('#ef4444', 'Cần kiểm tra', critical.map(esc).join('<br>'));
+        if (res.phongMissing.length) html += box('#f59e0b', 'Phòng không có lĩnh vực nào trong file', res.phongMissing.map(esc).join('<br>') + '<br><span class="note">Nếu tháng này phòng có phát sinh mà vẫn báo thiếu, có thể tên lĩnh vực đã đổi: gán lại ở mục bên dưới hoặc ở Cài đặt › Lĩnh vực của các phòng.</span>');
+        if (res.unmappedFields.length) html += box('#f59e0b', 'Lĩnh vực chưa gán cho phòng nào (không được tính)',
+            res.unmappedFields.map(f=>`<div style="margin:6px 0;"><div>${esc(f.name)} (${fmtInt(f.luot)} lượt)</div><select class="form-control bca-rv-sel" data-name="${encodeURIComponent(f.name)}" style="padding:6px; font-size:12px;"><option value="">Không tính cho phòng nào</option>${phongs.map(u=>`<option value="${u.id}">${esc(u.name)}</option>`).join('')}</select></div>`).join(''));
+        if (res.fuzzyFields.length) html += box('#38bdf8', 'Tên lĩnh vực khác chút, hệ thống tự nhận diện (kiểm tra lại)', res.fuzzyFields.map(f=>`"${esc(f.name)}" → ${esc(f.phong)} <span class="note">(giống "${esc(f.like)}")</span>`).join('<br>'));
+        if (res.unmatched.length) html += box('#f59e0b', res.unmatched.length + ' dòng đơn vị không khớp tên, bị bỏ qua', res.unmatched.map(esc).join('<br>'));
+        if (res.missing.length) html += box('#94a3b8', res.missing.length + ' đơn vị không có trong file, giữ nguyên số cũ', `<span class="note">${res.missing.slice(0, 8).map(esc).join('; ')}${res.missing.length > 8 ? '; ...' : ''}</span>`);
+        if (res.unmappedFields.length || res.fuzzyFields.length) html += `<label style="display:flex; gap:8px; align-items:center; margin-top:8px; cursor:pointer;"><input type="checkbox" id="bca-rv-remember" checked> Ghi nhớ lựa chọn cho các tháng sau</label>`;
+        html += `<div class="note" style="margin-top:8px;">Import sẽ ghi đè số lượt V03 và mức độ hài lòng đã có của tháng này.</div>`;
+        document.getElementById('bca-review-body').innerHTML = html;
+        document.getElementById('bca-review-go').innerText = critical.length ? 'Vẫn import' : 'Import';
+        document.getElementById('bca-review-modal').style.display = 'flex';
+        bcaReviewResolve = ok=>{
+            if (!ok) return resolve(null);
+            const newMap = JSON.parse(JSON.stringify(fieldMap));
+            let changed = false;
+            const add = (uid, name)=>{
+                if (!phongIds.has(uid)) return;
+                newMap[uid] = newMap[uid] || [];
+                if (newMap[uid].every(x=>normVi(x) !== normVi(name))){ newMap[uid].push(name); changed = true; }
+            };
+            document.querySelectorAll('.bca-rv-sel').forEach(sel=>{ if (sel.value) add(sel.value, decodeURIComponent(sel.dataset.name)); });
+            const rem = document.getElementById('bca-rv-remember');
+            const remember = !rem || rem.checked;
+            if (remember) res.fuzzyFields.forEach(f=>{ const u = phongs.find(p=>p.name === f.phong); if (u) add(u.id, f.name); });
+            if (remember && changed) db.collection('config').doc('bcaFields').set({ byUnit: newMap, updatedBy: currentUserDoc.username, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }).catch(()=>{});
+            resolve({ changed, fieldMap: newMap });
+        };
+    });
+}
+let bcaImportFile = null;
+function handleBcaImportFile(e){
+    bcaImportFile = e.target.files[0] || null;
+    document.getElementById('bca-import-label').innerText = bcaImportFile ? bcaImportFile.name : 'Nhấn để chọn file Excel của Bộ Công an';
+}
+function runBcaImport(){
+    triggerHaptic();
+    const statusEl = document.getElementById('bca-import-status');
+    if (!bcaImportFile){ statusEl.innerText = 'Vui lòng chọn file trước!'; return; }
+    const reader = new FileReader();
+    reader.onload = async (e)=>{
+        let res, rowsData, fieldMap;
+        try {
+            fieldMap = await loadBcaFieldMap();
+            const wb = XLSX.read(e.target.result, { type:'binary' });
+            rowsData = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header:1 });
+            res = parseBcaFile(rowsData, fieldMap);
+        } catch(err){ statusEl.innerText = 'Không đọc được file: ' + err.message; return; }
+        if (!res.monthKey){ statusEl.innerText = 'Không đọc được tháng từ tiêu đề (ô A1). Tiêu đề cần có dạng "... THÁNG 9/2026".'; return; }
+        if (!res.items.length){ statusEl.innerText = 'Không có đơn vị nào trong file khớp với danh sách ' + unitCatalog.length + ' đơn vị.'; return; }
+        const review = await bcaReview(res, fieldMap);
+        if (!review) return;
+        if (review.changed) res = parseBcaFile(rowsData, review.fieldMap);
+        const mKey = res.monthKey;
+        const warn = [];
+        if (res.unmappedFields.length) warn.push('Lĩnh vực chưa gán cho phòng nào nên không được tính (gán tại Cài đặt › Lĩnh vực của các phòng): ' + res.unmappedFields.map(f=>`${f.name} (${fmtInt(f.luot)} lượt)`).join('; '));
+        if (res.fuzzyFields.length) warn.push('Lĩnh vực tên khác chút so với cấu hình, hệ thống tự nhận diện theo tên gần giống (kiểm tra lại): ' + res.fuzzyFields.map(f=>`"${f.name}" → ${f.phong} (giống "${f.like}")`).join('; '));
+        if (res.unmatched.length) warn.push(res.unmatched.length + ' dòng đơn vị không khớp tên, bị bỏ qua: ' + res.unmatched.join('; '));
+        if (res.missing.length) warn.push(res.missing.length + ' đơn vị không có trong file, giữ nguyên số liệu cũ: ' + res.missing.join('; '));
+        showLoading(true);
+        const batch = db.batch();
+        const stamp = { updatedBy: currentUserDoc.username, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+        res.items.forEach(it=>{
+            const id = it.unit.id + '_' + mKey;
+            batch.set(db.collection('official').doc(id), { unitId: it.unit.id, unitName: it.unit.name, monthKey: mKey, soLuotChinhThuc: it.luot, ...stamp });
+            const sat = { unitId: it.unit.id, unitName: it.unit.name, monthKey: mKey, soLuot: it.luot, ...stamp };
+            if (it.q) it.q.forEach((v,i)=>{ sat['q'+(i+1)] = v; });
+            batch.set(db.collection('satisfaction').doc(id), sat);
+        });
+        batch.commit().then(()=>{
+            showLoading(false);
+            statusEl.innerText = warn.length ? 'Lưu ý: ' + warn.join(' | ') : '';
+            renderV03MissingList();
+            showImportDoneModal(mKey, res.items.length, 0, res.unmatched.length, 0);
+        }).catch(err=>{ showLoading(false); statusEl.innerText = 'Lỗi: ' + err.message; });
+    };
+    reader.readAsBinaryString(bcaImportFile);
+}
+
+// --------- CÀI ĐẶT: LĨNH VỰC CỦA CÁC PHÒNG ---------
+function bcaPhongUnits(){ return unitCatalog.filter(u=>normVi(u.name).indexOf('phong ') === 0); }
+function renderBcaFieldsEditor(){
+    const box = document.getElementById('bca-fields-editor');
+    loadBcaFieldMap().then(map=>{
+        box.innerHTML = bcaPhongUnits().map(u=>`<div class="form-group"><label>${u.name}</label><textarea class="form-control bca-fields-input" data-unit-id="${u.id}" rows="${Math.max(3, (map[u.id] || []).length + 1)}" placeholder="Mỗi dòng một lĩnh vực">${(map[u.id] || []).join('\n')}</textarea></div>`).join('');
+    }).catch(err=>{ box.innerHTML = '<div class="note">Không tải được cấu hình: ' + err.message + '</div>'; });
+}
+function saveBcaFields(){
+    triggerHaptic();
+    const byUnit = {}, owner = {};
+    let dup = null;
+    document.querySelectorAll('.bca-fields-input').forEach(t=>{
+        const uid = t.dataset.unitId;
+        byUnit[uid] = [];
+        t.value.split('\n').map(x=>x.trim()).filter(Boolean).forEach(f=>{
+            const key = normVi(f);
+            if (owner[key] && owner[key] !== uid) dup = dup || f;
+            owner[key] = uid;
+            if (byUnit[uid].every(x=>normVi(x) !== key)) byUnit[uid].push(f);
+        });
+    });
+    if (dup){ customAlert('Lĩnh vực "' + dup + '" đang thuộc nhiều phòng. Mỗi lĩnh vực chỉ được thuộc một phòng!', 'error'); return; }
+    showLoading(true);
+    db.collection('config').doc('bcaFields').set({ byUnit, updatedBy: currentUserDoc.username, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }).then(()=>{
+        showLoading(false); customAlert('Đã lưu lĩnh vực của các phòng. Áp dụng từ lần import file Bộ Công an tiếp theo.');
+    }).catch(err=>{ showLoading(false); customAlert('Lỗi: ' + err.message, 'error'); });
+}
+
+// --------- MỨC ĐỘ HÀI LÒNG ---------
+// Gộp các bản ghi 'satisfaction' thành {unitId: {luot, q:[5 câu]}}; luot là tổng lượt, q là TRUNG BÌNH CỘNG các tháng có số liệu (theo tháng thì chỉ có 1 tháng).
+function satAggregate(docs){
+    const acc = {};
+    docs.forEach(r=>{
+        const a = acc[r.unitId] = acc[r.unitId] || { luot: 0, n: 0, sums: [0,0,0,0,0] };
+        a.luot += r.soLuot || 0;
+        if (typeof r.q1 !== 'undefined'){
+            a.n++;
+            [r.q1, r.q2, r.q3, r.q4, r.q5].forEach((v,i)=>{ a.sums[i] += v; });
+        }
+    });
+    const map = {};
+    Object.keys(acc).forEach(id=>{ map[id] = { luot: acc[id].luot, q: acc[id].n > 0 ? acc[id].sums.map(x=>x / acc[id].n) : undefined }; });
+    return map;
+}
+function getSatisfactionForMonth(mKey){
+    return db.collection('satisfaction').where('monthKey','==',mKey).get().then(snap=>{
+        const docs = []; snap.forEach(d=>docs.push(d.data())); return satAggregate(docs);
+    });
+}
+function getSatisfactionCumulative(mKey){
+    const { startKey } = fiscalYearRange(mKey);
+    return db.collection('satisfaction').get().then(snap=>{
+        const docs = []; snap.forEach(d=>{ const r = d.data(); if (r.monthKey && r.monthKey>=startKey && r.monthKey<=mKey) docs.push(r); });
+        return satAggregate(docs);
+    });
+}
+let currentHlTab = 1;
+let hlRows = [];
+const fmtPct2 = v => (v*100).toFixed(2) + '%';
+const fmtNum2 = v => (v*100).toFixed(2);
+function showHaiLongTab(n){
+    currentHlTab = n;
+    document.getElementById('hltab-1').classList.toggle('active', n===1);
+    document.getElementById('hltab-2').classList.toggle('active', n===2);
+    const monthSel = document.getElementById('hl-month-select'), keepMonth = monthSel.value;
+    populateAdminMonths('hl', Number(document.getElementById('hl-year-select').value));
+    monthSel.value = keepMonth;
+    renderHaiLong();
+}
+function renderHaiLong(){
+    const mKey = document.getElementById('hl-month-select').value || currentMonthKey();
+    document.getElementById('hl-source-note').innerHTML = currentHlTab===1
+        ? '<i class="fa-solid fa-circle-info"></i> Số liệu do Bộ Công an gửi (V03 thống kê), import tại mục Nhập số liệu. <a href="#" onclick="showAdminSub(\'nhapv03\'); return false;" style="color:var(--blue-text); font-weight:700;">Import file</a>'
+        : '<i class="fa-solid fa-circle-info"></i> Mức độ hài lòng trung bình = trung bình cộng mức độ hài lòng từng câu của các tháng, từ đầu năm đánh giá (tháng 10) đến tháng đang chọn (chỉ tính tháng có số liệu), hệ thống tự tính. Cột Lượt là tổng lượt đánh giá của các tháng đó.';
+    showLoading(true);
+    (currentHlTab===1 ? getSatisfactionForMonth(mKey) : getSatisfactionCumulative(mKey)).then(map=>{
+        showLoading(false);
+        hlRows = unitCatalog.map((u,idx)=>({ unit:u, idx, d: map[u.id] }));
+        const withQ = hlRows.filter(r=>r.d && r.d.q);
+        const totalLuot = withQ.reduce((s,r)=>s + r.d.luot, 0);
+        const avg = totalLuot ? withQ.reduce((s,r)=>s + r.d.luot * r.d.q.reduce((a,b)=>a+b,0)/5, 0) / totalLuot : null;
+        document.getElementById('hl-avg').innerText = avg===null ? '--' : fmtPct2(avg);
+        document.getElementById('hl-count').innerText = withQ.length + ' / ' + unitCatalog.length;
+        renderHaiLongRows();
+    }).catch(err=>{ showLoading(false); customAlert('Lỗi: ' + err.message, 'error'); });
+}
+const HL_HEADERS = ['STT','Đơn vị','Số lượt đánh giá','Câu 1','Câu 2','Câu 3','Câu 4','Câu 5','Chung'];
+function hlTitle(mKey){ return (currentHlTab===1 ? 'Mức độ hài lòng tháng ' : 'Mức độ hài lòng trung bình đến ') + monthLabel(mKey); }
+function hlExportRows(){
+    return hlRows.map(r=>{
+        const d = r.d, q = d && d.q;
+        return [r.idx+1, r.unit.name, d ? d.luot : '', ...(q ? q.map(fmtPct2) : ['','','','','']), q ? fmtPct2(q.reduce((a,b)=>a+b,0)/5) : ''];
+    }).concat((sm=>sm ? [['', `Trung bình (${sm.n} đơn vị có số liệu)`, sm.luot, ...sm.avg.map(fmtPct2), fmtPct2(sm.chung)]] : [])(hlSummary(hlRows)));
+}
+function exportHaiLongExcel(){
+    const mKey = document.getElementById('hl-month-select').value;
+    return downloadStyledExcel({ sheet: currentHlTab===1 ? 'Hai long thang' : 'Hai long TB', filename:`HaiLong${currentHlTab===1 ? '' : 'TB'}_${mKey}.xlsx`,
+        title:hlTitle(mKey), headers:HL_HEADERS, rows:hlExportRows(), leftCols:[1], boldLast:hlSummary(hlRows) ? true : false });
+}
+function exportHaiLongWord(){
+    const mKey = document.getElementById('hl-month-select').value;
+    exportHtmlAsWord(hlTitle(mKey), styledWordBody({ headers:HL_HEADERS, rows:hlExportRows(), leftCols:[1], numW:9, boldLast:hlSummary(hlRows) ? true : false }), `HaiLong${currentHlTab===1 ? '' : 'TB'}_${mKey}.doc`);
+}
+// Dòng Trung bình: trung bình cộng các đơn vị có số liệu (Lượt = tổng lượt của các đơn vị đó)
+function hlSummary(list){
+    const withQ = list.filter(r=>r.d && r.d.q);
+    if (!withQ.length) return null;
+    return { n: withQ.length,
+        avg: [0,1,2,3,4].map(i=>withQ.reduce((t,r)=>t+r.d.q[i],0)/withQ.length),
+        chung: withQ.reduce((t,r)=>t+r.d.q.reduce((a,b)=>a+b,0)/5,0)/withQ.length,
+        luot: withQ.reduce((t,r)=>t+(r.d.luot||0),0) };
+}
+let hlSort = { key: null, dir: 'desc' };
+function setHlSort(k){ hlSort = nextSort(hlSort, k, k === 'name'); renderHaiLongRows(); }
+function hlSortVal(r, k){
+    if (k === 'name') return r.unit.name;
+    if (!r.d) return undefined;
+    if (k === 'luot') return r.d.luot;
+    if (!r.d.q) return undefined;
+    return k === 'chung' ? r.d.q.reduce((a,b)=>a+b,0)/5 : r.d.q[+k.slice(1) - 1];
+}
+function renderHaiLongRows(){
+    const q = normVi(document.getElementById('hl-search').value.trim());
+    const rows = sortList(hlRows.filter(r=>!q || normVi(r.unit.name).includes(q)), hlSort, hlSortVal);
+    setSortIcons(document.getElementById('hl-body').closest('table').querySelectorAll('th.sortable'), hlSort);
+    const sm = hlSummary(rows);
+    let avgRow = '';
+    if (sm){
+        const { n, avg, chung, luot } = sm;
+        const withQ = { length: n };
+        avgRow = `<tr style="background:var(--bg); font-weight:700;"><td></td><td class="unit-name" style="text-align:left;">Trung bình (${withQ.length} đơn vị)</td><td>${fmtInt(luot)}</td>${avg.map(v=>`<td>${fmtNum2(v)}</td>`).join('')}<td>${fmtNum2(chung)}</td></tr>`;
+    }
+    document.getElementById('hl-body').innerHTML = rows.length ? avgRow + rows.map(r=>{
+        const head = `<td>${r.idx+1}</td><td class="unit-name unit-link" onclick="openHlUnit(${r.idx})">${r.unit.name}</td>`;
+        if (!r.d) return `<tr>${head}<td colspan="7" style="color:var(--text-muted); font-style:italic;">Chưa có</td></tr>`;
+        if (!r.d.q) return `<tr>${head}<td>${fmtInt(r.d.luot)}</td><td colspan="6" style="color:var(--text-muted); font-style:italic;">Chưa có</td></tr>`;
+        return `<tr>${head}<td>${fmtInt(r.d.luot)}</td>${r.d.q.map(v=>`<td>${fmtNum2(v)}</td>`).join('')}<td><b>${fmtNum2(r.d.q.reduce((a,b)=>a+b,0)/5)}</b></td></tr>`;
+    }).join('') : '<tr><td colspan="9" style="color:var(--text-muted); font-style:italic;">Không tìm thấy đơn vị phù hợp</td></tr>';
+}
+
+// --------- POPUP HÀI LÒNG THEO THÁNG CỦA ĐƠN VỊ ---------
+let hlUnitCur = null, hlUnitChart = null;
+function setHlUnitView(w, on){
+    document.getElementById('hl-unit-' + w + '-box').style.display = on ? '' : 'none';
+    document.getElementById('hl-tg-' + w).classList.toggle('active', on);
+    if (on && w === 'chart' && hlUnitChart) hlUnitChart.resize();
+}
+function toggleHlUnitView(w){ setHlUnitView(w, document.getElementById('hl-unit-' + w + '-box').style.display === 'none'); }
+const HL_UNIT_HEADERS = ['Tháng','Số lượt đánh giá','Câu 1','Câu 2','Câu 3','Câu 4','Câu 5','Chung'];
+function hlUnitRows(){
+    const done = hlUnitCur.months.filter(m=>m.q);
+    const rows = hlUnitCur.months.map(m=>[
+        monthLabel(m.key), m.luot === undefined ? '' : m.luot,
+        ...(m.q ? m.q.map(fmtPct2) : ['','','','','']), m.q ? fmtPct2(m.q.reduce((a,b)=>a+b,0)/5) : ''
+    ]);
+    if (done.length){
+        const avg = [0,1,2,3,4].map(i=>done.reduce((t,m)=>t+m.q[i],0)/done.length);
+        rows.push(['Trung bình', hlUnitCur.months.reduce((t,m)=>t+(m.luot||0),0), ...avg.map(fmtPct2), fmtPct2(avg.reduce((a,b)=>a+b,0)/5)]);
+    } else rows.push(['Trung bình','','','','','','','']);
+    return rows;
+}
+function openHlUnit(idx){
+    const row = hlRows[idx]; if (!row) return;
+    const mKey = document.getElementById('hl-month-select').value || currentMonthKey();
+    const { evalYear } = fiscalYearRange(mKey);
+    showLoading(true);
+    db.collection('satisfaction').where('unitId','==',row.unit.id).get().then(snap=>{
+        showLoading(false);
+        const byMonth = {}; snap.forEach(d=>{ const r = d.data(); byMonth[r.monthKey] = r; });
+        const { startKey, endKey } = fiscalYearRange(monthKey(evalYear, 9));
+        const months = [];
+        for (let k = startKey, g = 0; k <= endKey && g < 12; k = nextMonthKey(k), g++){
+            const r = byMonth[k];
+            months.push({ key:k, luot: r ? (r.soLuot || 0) : undefined, q: r && typeof r.q1 !== 'undefined' ? [r.q1,r.q2,r.q3,r.q4,r.q5] : null });
+        }
+        hlUnitCur = { name: row.unit.name, evalYear, months };
+        document.getElementById('hl-unit-modal-title').innerText = row.unit.name;
+        document.getElementById('hl-unit-modal-sub').innerText = 'Mức độ hài lòng theo tháng · ' + evalYearLabel(evalYear);
+        document.getElementById('hl-unit-body').innerHTML = hlUnitRows().map((c,i,arr)=>{
+            const last = i === arr.length - 1, has = c[2] !== '';
+            const cells = has ? c.slice(1).map((v,j)=> j===0 ? fmtInt(v) : v.replace('%','')) : null;
+            const b = t => last ? `<b>${t}</b>` : t;
+            const lbl = last ? c[0] : c[0].replace('Tháng ','T');
+            return has
+                ? `<tr><td style="text-align:left;">${b(lbl)}</td>${cells.map(v=>`<td>${b(v)}</td>`).join('')}</tr>`
+                : `<tr><td style="text-align:left;">${b(lbl)}</td><td colspan="7" style="color:var(--text-muted); font-style:italic;">Chưa có</td></tr>`;
+        }).join('');
+        setHlUnitView('table', true); setHlUnitView('chart', false);
+        document.getElementById('hl-unit-modal').style.display = '';
+        if (typeof Chart === 'undefined') return;
+        const has = months.map(m=>!!m.q);
+        const vals = months.map(m=> m.q ? m.q.reduce((a,b)=>a+b,0)/5*100 : null);
+        const present = vals.filter(v=>v !== null);
+        const yMin = present.length ? Math.max(0, Math.floor((Math.min(...present) - 2) / 5) * 5) : 0;
+        document.getElementById('hl-unit-chart-note').innerText = 'Cột: mức độ hài lòng chung từng tháng (trung bình 5 câu).' + (yMin > 0 ? ` Trục dọc bắt đầu từ ${yMin}% để thấy rõ chênh lệch.` : '') + ' Tháng chưa có số liệu để trống.';
+        if (hlUnitChart){ hlUnitChart.destroy(); hlUnitChart = null; }
+        hlUnitChart = new Chart(document.getElementById('hl-unit-chart'), {
+            type: 'bar',
+            data: { labels: months.map(m=>monthLabel(m.key).replace('Tháng ','T')), datasets: [{ data: vals, backgroundColor: '#38bdf8', borderRadius: 5, maxBarThickness: 26 }] },
+            options: {
+                layout: { padding: { top: 18 } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: item=> `${vals[item.dataIndex].toFixed(2)}% (${fmtInt(months[item.dataIndex].luot)} lượt)` } },
+                    datalabels: { display: ctx=> has[ctx.dataIndex], anchor:'end', align:'end', offset:1, color:'#e6f1ff', font:{ weight:'700', size:8.5 }, formatter: v=> v.toFixed(1) }
+                },
+                scales: {
+                    y: { min: yMin, max: 100, ticks:{ callback:v=>v+'%', font:{size:10} }, grid:{ color:'rgba(148,163,184,0.15)' } },
+                    x: { ticks:{ font:{size:10} }, grid:{ display:false } }
+                },
+                responsive: true, maintainAspectRatio: false
+            }
+        });
+    }).catch(err=>{ showLoading(false); customAlert('Lỗi: ' + err.message, 'error'); });
+}
+function hlUnitFileBase(){
+    return `HaiLongNam${hlUnitCur.evalYear}_` + hlUnitCur.name.replace(/[\\\/:*?"<>|,]/g,'').trim().replace(/\s+/g,'_');
+}
+function exportHlUnitExcel(){
+    if (!hlUnitCur) return;
+    return downloadStyledExcel({ sheet:'Hai long nam ' + hlUnitCur.evalYear, filename:hlUnitFileBase() + '.xlsx',
+        title:hlUnitCur.name, sub:'Mức độ hài lòng ' + evalYearLabel(hlUnitCur.evalYear),
+        headers:HL_UNIT_HEADERS, rows:hlUnitRows(), leftCols:[0], boldLast:true });
+}
+function exportHlUnitWord(){
+    if (!hlUnitCur) return;
+    exportHtmlAsWord(hlUnitCur.name,
+        styledWordBody({ sub:'Mức độ hài lòng ' + evalYearLabel(hlUnitCur.evalYear), headers:HL_UNIT_HEADERS, rows:hlUnitRows(), leftCols:[0], boldLast:true, numW:9 }),
+        hlUnitFileBase() + '.doc');
+}
+function closeHlUnitModal(){ document.getElementById('hl-unit-modal').style.display = 'none'; }
+
 // --------- PHỤ LỤC 2 & 3 ---------
 let currentPlTab = 2;
 let lastPlData = [];
@@ -2379,6 +3413,8 @@ function showPhuLucTab(n){
     document.getElementById('pl-tyle-label').innerText = n===2 ? 'Tỷ lệ bình quân của các đơn vị (lượt đánh giá ÷ tổng TTHC)' : 'Tỷ lệ lũy kế bình quân của các đơn vị (lũy kế lượt ÷ lũy kế TTHC)';
     document.getElementById('pl-col1').innerText = n===2 ? 'Lượt đánh giá' : 'Lũy kế lượt';
     document.getElementById('pl-col2').innerText = n===2 ? 'Tổng TTHC' : 'Lũy kế TTHC';
+    document.getElementById('pl-tong-luot-label').innerText = n===2 ? 'Tổng số lượt đánh giá toàn tỉnh (tháng)' : 'Tổng lũy kế lượt đánh giá toàn tỉnh';
+    document.getElementById('pl-tong-tthc-label').innerText = n===2 ? 'Tổng số TTHC toàn tỉnh (tháng)' : 'Tổng lũy kế TTHC toàn tỉnh';
     const plMonthSel = document.getElementById('pl-month-select'), keepMonth = plMonthSel.value;
     populateAdminMonths('pl', Number(document.getElementById('pl-year-select').value));
     plMonthSel.value = keepMonth;
@@ -2416,6 +3452,10 @@ function renderPhuLuc(){
         document.getElementById('pl-dat').innerText = soDat + ' / ' + unitCatalog.length;
         document.getElementById('pl-tyle').innerText = withTyLe.length ? fmtPct(avgTyLe) : '0%';
         document.getElementById('pl-tyle-scope').innerText = `(bình quân trên ${withTyLe.length}/${unitCatalog.length} đơn vị đã có đủ số liệu)`;
+        const haveLuot = rows.filter(r=>typeof r.col1 === 'number'), haveTthc = rows.filter(r=>typeof r.col2 === 'number');
+        document.getElementById('pl-tong-luot').innerText = fmtInt(haveLuot.reduce((s,r)=>s+r.col1,0));
+        document.getElementById('pl-tong-tthc').innerText = fmtInt(haveTthc.reduce((s,r)=>s+r.col2,0));
+        document.getElementById('pl-tong-scope').innerText = `(cộng trên ${haveLuot.length}/${unitCatalog.length} đơn vị có số lượt V03 · ${haveTthc.length}/${unitCatalog.length} đơn vị có Tổng TTHC)`;
         renderPhuLucRows();
     });
 }
@@ -2446,6 +3486,40 @@ let plSort = { key: null, dir: 'desc' };
 function setPlSort(k){ plSort = nextSort(plSort, k, k === 'name'); renderPhuLucRows(); }
 let dcSort = { key: null, dir: 'desc' };
 function setDcSort(k){ dcSort = nextSort(dcSort, k, k === 'unitName'); renderReconcileRows(); }
+// Danh sách dạng dòng (.list-row): tìm theo tên + sắp xếp bằng cách đổi chỗ các dòng.
+// Mỗi dòng mang data-s (chuỗi để tìm) và data-<khóa> (giá trị để sắp xếp); rỗng thì xếp cuối.
+const DOM_LISTS = {
+    'v03-missing-list': { search:'v03m-search', bar:'v03m-sort-bar' },
+    'admin-account-list': { search:'acc-search', bar:'acc-sort-bar' },
+    'rp-list': { bar:'rp-sort-bar' }
+};
+const domSorts = {};
+function domListSort(id, k, isText){
+    const s = domSorts[id] = nextSort(domSorts[id] || { key:null, dir:'desc' }, k, isText);
+    s.text = isText; domListApply(id);
+}
+function domListApply(id){
+    const box = document.getElementById(id), cfg = DOM_LISTS[id];
+    const s = domSorts[id] || { key:null, dir:'desc' }, m = s.dir === 'asc' ? 1 : -1;
+    const rows = [...box.querySelectorAll(':scope > .list-row')];
+    rows.forEach((r,i)=>{ if (!r.dataset.i) r.dataset.i = i; });
+    rows.sort((a,b)=>{
+        const x = s.key ? a.dataset[s.key] : '', y = s.key ? b.dataset[s.key] : '';
+        if (!x || !y) return (!x && !y) ? a.dataset.i - b.dataset.i : (!x ? 1 : -1);
+        return s.text ? m * x.localeCompare(y, 'vi') : m * (x - y);
+    });
+    rows.forEach(r=>box.appendChild(r));
+    if (cfg.search){
+        const q = normVi(document.getElementById(cfg.search).value.trim());
+        rows.forEach(r=>{ r.style.display = (!q || r.dataset.s.includes(q)) ? '' : 'none'; });
+    }
+    setSortIcons(document.querySelectorAll('#' + cfg.bar + ' button'), s);
+}
+// Ô hạng: top 3 hiện huy chương, còn lại hiện số; chưa xếp hạng hiện dấu gạch
+function rankCellHtml(rank){
+    if (typeof rank === 'undefined') return '-';
+    return rank <= 3 ? `<span class="medal m${rank}">${rank}</span>` : rank;
+}
 function normVi(t){ return (t||'').toLowerCase().replace(/đ/g,'d').normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
 function renderPhuLucRows(){
     const q = normVi(document.getElementById('pl-search').value.trim());
@@ -2574,7 +3648,16 @@ function closePlUnitModal(){
     if (plUnitChart) { plUnitChart.destroy(); plUnitChart = null; }
 }
 function plExportRows(){
-    return lastPlData.map((r,idx)=>[idx+1, r.unit.name, typeof r.col1!=='undefined'?r.col1:'', typeof r.col2!=='undefined'?r.col2:'', typeof r.tyLe!=='undefined'?fmtPct(r.tyLe):'', typeof r.tyLe!=='undefined'?(r.tyLe>=60?'Đạt':'Không Đạt'):'Chưa đủ dữ liệu']);
+    const rows = lastPlData.map((r,idx)=>[idx+1, r.unit.name, typeof r.col1!=='undefined'?r.col1:'', typeof r.col2!=='undefined'?r.col2:'', typeof r.tyLe!=='undefined'?fmtPct(r.tyLe):'', typeof r.tyLe!=='undefined'?(r.tyLe>=60?'Đạt':'Không Đạt'):'Chưa đủ dữ liệu']);
+    const haveLuot = lastPlData.filter(r=>typeof r.col1 === 'number'), haveTthc = lastPlData.filter(r=>typeof r.col2 === 'number');
+    const withTyLe = lastPlData.filter(r=>typeof r.tyLe !== 'undefined');
+    const sumLuot = haveLuot.reduce((t,r)=>t+r.col1,0), sumTthc = haveTthc.reduce((t,r)=>t+r.col2,0);
+    // tỷ lệ chung chỉ tính trên đơn vị có đủ cả V03 và TTHC (cùng tập đơn vị ở tử và mẫu)
+    const both = lastPlData.filter(r=>typeof r.col1 === 'number' && typeof r.col2 === 'number');
+    const bothSum1 = both.reduce((t,r)=>t+r.col1,0), bothSum2 = both.reduce((t,r)=>t+r.col2,0);
+    rows.push(['', `Tổng toàn tỉnh (${haveLuot.length}/${unitCatalog.length} đơn vị có V03 · ${haveTthc.length}/${unitCatalog.length} có TTHC)`, sumLuot, sumTthc, bothSum2>0 ? fmtPct(bothSum1/bothSum2*100) : '', '']);
+    rows.push(['', `Trung bình tỷ lệ (${withTyLe.length}/${unitCatalog.length} đơn vị đủ số liệu)`, '', '', withTyLe.length ? fmtPct(withTyLe.reduce((t,r)=>t+r.tyLe,0)/withTyLe.length) : '', `Đạt ${withTyLe.filter(r=>r.tyLe>=60).length}/${unitCatalog.length}`]);
+    return rows;
 }
 function plTitle(mKey){ return (currentPlTab===2 ? 'Phụ lục 2 - Kết quả chỉ tiêu tháng ' : 'Phụ lục 3 - Lũy kế chỉ tiêu đến ') + monthLabel(mKey); }
 function exportPhuLucExcel(){
@@ -2582,17 +3665,18 @@ function exportPhuLucExcel(){
     const col1Label = currentPlTab===2 ? 'Số lượt đánh giá (V03)' : 'Lũy kế lượt (V03)';
     const col2Label = currentPlTab===2 ? 'Tổng TTHC' : 'Lũy kế TTHC';
     return downloadStyledExcel({ sheet:currentPlTab===2 ? "Phu luc 2" : "Phu luc 3", filename:`PhuLuc${currentPlTab}_${mKey}.xlsx`,
-        title:plTitle(mKey), headers:["STT","Đơn vị",col1Label,col2Label,"Tỷ lệ %","Đánh giá"], rows:plExportRows(), leftCols:[1] });
+        title:plTitle(mKey), headers:["STT","Đơn vị",col1Label,col2Label,"Tỷ lệ %","Đánh giá"], rows:plExportRows(), leftCols:[1], boldLast:2 });
 }
 function exportPhuLucWord(){
     const mKey = document.getElementById('pl-month-select').value;
     exportHtmlAsWord(plTitle(mKey),
-        styledWordBody({ headers:["STT","Đơn vị","Số lượt","Tổng TTHC","Tỷ lệ %","Đánh giá"], rows:plExportRows(), leftCols:[1] }),
+        styledWordBody({ headers:["STT","Đơn vị","Số lượt","Tổng TTHC","Tỷ lệ %","Đánh giá"], rows:plExportRows(), leftCols:[1], boldLast:2 }),
         `PhuLuc${currentPlTab}_${mKey}.doc`);
 }
 
 // --------- CÀI ĐẶT: THÔNG BÁO / EMAIL / TÀI KHOẢN ---------
 function loadAdminConfig(){
+    renderBcaFieldsEditor();
     db.collection('config').doc('app').get().then(doc=>{
         const d = doc.exists ? doc.data() : {};
         document.getElementById('cfg-notice-enabled').checked = !!d.noticeEnabled;
@@ -2681,13 +3765,14 @@ function openReminderPicker(){
         const nMail = rows.filter(r=>r.email).length, nChua = rows.filter(r=>!r.done).length;
         document.getElementById('rp-sub').innerText = `${monthLabel(key)} · ${nMail}/${rows.length} đơn vị đã nhập email · ${nChua} đơn vị chưa nhập đủ số liệu`;
         document.getElementById('rp-list').innerHTML = rows.map((r,i)=>`
-            <div class="list-row rp-row" data-s="${rpNorm(r.name+' '+r.email)}">
+            <div class="list-row rp-row" data-name="${r.name}" data-email="${r.email}" data-done="${r.done ? 2 : 1}" data-s="${rpNorm(r.name+' '+r.email)}">
                 <label style="display:flex; align-items:center; gap:10px; flex:1; min-width:0; cursor:${r.email?'pointer':'not-allowed'};">
                     <input type="checkbox" class="rp-check" value="${i}" ${r.email?'':'disabled'} onchange="onReminderManualTick()">
                     <div><div class="title">${r.name}</div><div class="sub">${r.email ? '<i class="fa-solid fa-envelope" style="color:var(--green-text);"></i> '+r.email : '<span style="color:var(--red-text); font-weight:600;"><i class="fa-solid fa-circle-exclamation"></i> Chưa nhập email</span>'}</div></div>
                 </label>${r.done ? '' : pendBadge}
             </div>`).join('') || '<div class="note">Chưa có đơn vị nào.</div>';
         document.getElementById('rp-search').value = '';
+        domListApply('rp-list');
         document.getElementById('rp-option').value = 'selected';
         document.getElementById('rp-message').value = rpDefaultMessage(false);
         document.getElementById('rp-status').innerText = '';
@@ -2796,7 +3881,7 @@ function renderAdminAccountList(){
         const accounts = []; snap.forEach(d=>accounts.push(d.data()));
         accounts.sort((a,b)=>(a.unitName||'').localeCompare(b.unitName||''));
         document.getElementById('admin-account-list').innerHTML = accounts.map(acc=>`
-            <div class="list-row">
+            <div class="list-row" data-name="${acc.unitName||''}" data-user="${acc.username}" data-email="${acc.email||''}" data-s="${normVi((acc.unitName||'')+' '+acc.username+' '+(acc.email||''))}">
                 <label style="display:flex; align-items:center; gap:10px; flex:1; min-width:0; cursor:pointer;">
                     <input type="checkbox" class="acc-check" value="${acc.username}" onchange="updateAccountSelection()">
                     <div><div class="title">${acc.unitName}</div><div class="sub">@${acc.username} · ${acc.email||'chưa có email'}</div></div>
@@ -2806,6 +3891,7 @@ function renderAdminAccountList(){
                     <button class="btn-danger-outline" style="padding:5px 9px; border-radius:8px; font-size:12px;" onclick="adminDeleteAccount('${acc.username}')"><i class="fa-solid fa-trash"></i></button>
                 </div>
             </div>`).join('') || '<div class="note">Chưa có tài khoản nào.</div>';
+        domListApply('admin-account-list');
         updateAccountSelection();
     });
 }
