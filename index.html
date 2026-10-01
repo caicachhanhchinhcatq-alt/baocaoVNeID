@@ -460,11 +460,11 @@ table.dt tbody tr:hover { background: rgba(56,189,248,.08); }
         </div>
         <div class="card" id="uhl-panel-own">
           <select id="uhl-year-select" class="form-control" style="margin-bottom:8px;" onchange="loadUserHaiLong()"></select>
-          <div class="note" style="margin-bottom:10px;"><i class="fa-solid fa-circle-info"></i> Số liệu do Bộ Công an gửi (V03 thống kê), Quản trị cập nhật hằng tháng. Tháng chưa có số liệu hiện "Chưa có".</div>
+          <div class="note" style="margin-bottom:10px; font-size:11px; line-height:1.5;"><i class="fa-solid fa-circle-info"></i> Số liệu do Bộ Công an gửi (V03 thống kê), Quản trị cập nhật hằng tháng. Tháng chưa có số liệu hiện "Chưa có".</div>
           <div class="big-metric">
             <div class="lbl">Mức độ hài lòng trung bình năm đánh giá</div>
             <div class="val" id="uhl-avg">--</div>
-            <div class="note" id="uhl-avg-note"></div>
+            <div class="note" id="uhl-avg-note" style="font-size:12px; line-height:1.6;"></div>
           </div>
           <div class="stat-grid">
             <div class="stat-box"><div class="n" id="uhl-latest">--</div><div class="l" id="uhl-latest-lbl">Tháng mới nhất</div></div>
@@ -516,7 +516,7 @@ table.dt tbody tr:hover { background: rgba(56,189,248,.08); }
           </div>
           <div class="card">
             <div style="font-weight:700; font-size:13px; margin-bottom:8px;">Bảng xếp hạng theo mức độ hài lòng</div>
-            <div class="form-group"><input type="search" id="uhr-search" class="form-control" placeholder="Tìm tên đơn vị..." oninput="renderUhrRows()"></div>
+            <div class="form-group"><input type="search" id="uhr-search" class="form-control" placeholder="Tìm tên đơn vị..." oninput="renderUhrRows()"><div class="note" style="margin-top:4px;">Bấm vào tên đơn vị để xem biểu đồ mức độ hài lòng từng tháng.</div></div>
             <div class="data-table-wrap">
               <table class="dt dt-fit"><thead><tr><th class="sortable" data-k="rank" onclick="setUhrSort('rank')" style="width:11%;">Hạng <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="name" onclick="setUhrSort('name')">Tên đơn vị <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="luot" onclick="setUhrSort('luot')" style="width:18%;">Lượt <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="chung" onclick="setUhrSort('chung')" style="width:20%;">Chung (%) <i class="fa-solid fa-sort sort-ic"></i></th></tr></thead>
               <tbody id="uhr-body"></tbody></table>
@@ -574,6 +574,27 @@ table.dt tbody tr:hover { background: rgba(56,189,248,.08); }
         <div class="note" id="rk-unit-sub" style="margin-bottom:8px;"></div>
         <div style="position:relative; height:230px;"><canvas id="rk-unit-chart"></canvas></div>
         <div class="note" style="margin-top:8px; font-size:11px;">Cột xanh: đạt (từ 60%) · Cột đỏ: chưa đạt · Cột xám: chưa đủ số liệu V03 hoặc Tổng TTHC. Tỷ lệ = lượt đánh giá V03 ÷ Tổng TTHC.</div>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button class="btn btn-xls" style="padding:9px; font-size:13px;" onclick="exportPlUnitExcel()"><i class="fa-solid fa-file-excel"></i> Xuất Excel</button>
+          <button class="btn btn-doc" style="padding:9px; font-size:13px;" onclick="exportPlUnitWord()"><i class="fa-solid fa-file-word"></i> Xuất Word</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- POPUP MỨC ĐỘ HÀI LÒNG THEO THÁNG CỦA MỘT ĐƠN VỊ (XẾP HẠNG HÀI LÒNG) -->
+    <div id="uhr-unit-modal" class="modal-overlay" style="display:none;" onclick="if(event.target===this) closeUhrUnit()">
+      <div class="modal-box card">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:4px;">
+          <h2 id="uhr-unit-title" style="margin:0; font-size:14px; line-height:1.35;"></h2>
+          <button onclick="closeUhrUnit()" style="background:none; border:none; color:var(--text-main); font-size:18px; cursor:pointer; padding:0 2px;"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="note" id="uhr-unit-sub" style="margin-bottom:8px;"></div>
+        <div style="position:relative; height:230px;"><canvas id="uhr-unit-chart"></canvas></div>
+        <div class="note" id="uhr-unit-note" style="margin-top:8px; font-size:11px;"></div>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button class="btn btn-xls" style="padding:9px; font-size:13px;" onclick="exportUhrUnitExcel()"><i class="fa-solid fa-file-excel"></i> Xuất Excel</button>
+          <button class="btn btn-doc" style="padding:9px; font-size:13px;" onclick="exportUhrUnitWord()"><i class="fa-solid fa-file-word"></i> Xuất Word</button>
+        </div>
       </div>
     </div>
 
@@ -931,7 +952,7 @@ table.dt tbody tr:hover { background: rgba(56,189,248,.08); }
         <div class="card pl-card">
           <div class="form-group" style="padding:0 6px;"><input type="search" id="hl-search" class="form-control" placeholder="Tìm tên đơn vị..." oninput="renderHaiLongRows()"></div>
           <div class="data-table-wrap">
-            <table class="dt dt-fit hl-table"><thead><tr><th style="width:6.5%;">STT</th><th class="sortable" data-k="name" onclick="setHlSort('name')" style="text-align:left; width:20.5%; padding-left:3px;">Đơn vị <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="luot" onclick="setHlSort('luot')" style="width:9.5%;">Lượt <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="q1" onclick="setHlSort('q1')" style="width:10.4%;">Câu 1 <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="q2" onclick="setHlSort('q2')" style="width:10.4%;">Câu 2 <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="q3" onclick="setHlSort('q3')" style="width:10.4%;">Câu 3 <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="q4" onclick="setHlSort('q4')" style="width:10.4%;">Câu 4 <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="q5" onclick="setHlSort('q5')" style="width:10.4%;">Câu 5 <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="chung" onclick="setHlSort('chung')" style="width:11.5%;">Chung <i class="fa-solid fa-sort sort-ic"></i></th></tr></thead>
+            <table class="dt dt-fit hl-table"><thead><tr><th style="width:6.5%;">STT</th><th class="sortable" data-k="name" onclick="setHlSort('name')" style="text-align:left; width:17.5%; padding-left:3px;">Đơn vị <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="luot" onclick="setHlSort('luot')" style="width:12.5%;">Lượt <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="q1" onclick="setHlSort('q1')" style="width:10.4%;">Câu 1 <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="q2" onclick="setHlSort('q2')" style="width:10.4%;">Câu 2 <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="q3" onclick="setHlSort('q3')" style="width:10.4%;">Câu 3 <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="q4" onclick="setHlSort('q4')" style="width:10.4%;">Câu 4 <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="q5" onclick="setHlSort('q5')" style="width:10.4%;">Câu 5 <i class="fa-solid fa-sort sort-ic"></i></th><th class="sortable" data-k="chung" onclick="setHlSort('chung')" style="width:11.5%;">Chung <i class="fa-solid fa-sort sort-ic"></i></th></tr></thead>
             <tbody id="hl-body"></tbody></table>
           </div>
           <div class="note" style="padding:0 6px; margin-top:8px; font-size:11.5px;">Câu 1–5 và Chung tính theo %: tỷ lệ hài lòng theo từng câu hỏi do V03 thống kê; Chung = trung bình 5 câu. Dòng Trung bình đầu bảng = trung bình cộng các đơn vị đang hiển thị (cột Lượt là tổng lượt). Đơn vị chưa có số liệu hiện "Chưa có".</div>
@@ -1274,6 +1295,9 @@ function showLoading(v){ document.getElementById('loading-overlay').classList.to
 function showScreen(id){ document.querySelectorAll('.view-screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
 function fmtInt(n){ return (n||0).toLocaleString('vi-VN'); }
 function fmtPct(n){ return n.toFixed(1) + '%'; }
+// Chuỗi phần trăm kiểu "96.36%" (dùng cho file xuất): Word -> "96,36%" (2 số thập phân); Excel -> số thật định dạng 0.00%
+const PCT_STR = /^-?\d+(?:\.\d+)?%$/;
+function pctToVi(v){ return typeof v === 'string' && PCT_STR.test(v) ? Number(v.slice(0,-1)).toFixed(2).replace('.', ',') + '%' : v; }
 function badgeHtml(dat){ return dat ? '<span class="badge badge-green">Đạt</span>' : '<span class="badge badge-red">Không Đạt</span>'; }
 
 function filterUnitSuggestions(inputId, boxId){
@@ -1822,7 +1846,7 @@ function loadUserHaiLong(){
         if (done.length){
             const avg = done.reduce((t,m)=>t + m.q.reduce((a,b)=>a+b,0)/5, 0) / done.length * 100;
             document.getElementById('uhl-avg').innerText = avg.toFixed(2) + '%';
-            document.getElementById('uhl-avg-note').innerText = `Trung bình ${done.length} tháng đã có số liệu`;
+            document.getElementById('uhl-avg-note').innerHTML = `<div>Tính trên ${done.length} tháng đã có số liệu</div>`;
         } else {
             document.getElementById('uhl-avg').innerText = '--';
             document.getElementById('uhl-avg-note').innerText = 'Chưa có số liệu hài lòng trong năm đánh giá này';
@@ -1841,7 +1865,7 @@ function loadUserHaiLong(){
             const mu = both.reduce((t,x)=>t+x.u,0)/both.length, mp = both.reduce((t,x)=>t+x.p,0)/both.length;
             document.getElementById('uhl-cmp-body').innerHTML = both.map(x=>`<tr><td style="text-align:left;">${monthLabel(x.m.key).replace('Tháng ','T')}</td><td>${x.u.toFixed(2)}</td><td>${x.p.toFixed(2)}</td><td>${dHtml(x.u-x.p)}</td></tr>`).join('')
                 + `<tr style="font-weight:700;"><td style="text-align:left;">Trung bình</td><td>${mu.toFixed(2)}</td><td>${mp.toFixed(2)}</td><td>${dHtml(mu-mp)}</td></tr>`;
-            document.getElementById('uhl-avg-note').innerText += ` · Toàn tỉnh cùng các tháng: ${mp.toFixed(2)}%`;
+            document.getElementById('uhl-avg-note').innerHTML += `<div>Toàn tỉnh (cùng ${both.length} tháng): <b>${mp.toFixed(2)}%</b></div>`;
         }
         if (typeof Chart === 'undefined') return;
         const present = vals.concat(provVals).filter(v=>v !== null);
@@ -1975,8 +1999,61 @@ function renderUhrRows(){
     setSortIcons(document.getElementById('uhr-body').closest('table').querySelectorAll('th.sortable'), uhrSort);
     document.getElementById('uhr-body').innerHTML = rows.length ? rows.map(r=>{
         const isOwn = r.unit.id===uhrOwnId;
-        return `<tr${isOwn ? ' style="background:var(--blue-bg); font-weight:700;"' : ''}><td>${rankCellHtml(r.rank)}</td><td class="unit-name">${r.unit.name}${isOwn ? ' <span class="badge" style="background:var(--blue-bg); color:var(--blue-text);">Đơn vị bạn</span>' : ''}</td><td>${typeof r.luot !== 'undefined' ? fmtInt(r.luot) : na}</td><td>${typeof r.chung !== 'undefined' ? r.chung.toFixed(2) : na}</td></tr>`;
+        return `<tr${isOwn ? ' style="background:var(--blue-bg); font-weight:700;"' : ''}><td>${rankCellHtml(r.rank)}</td><td class="unit-name unit-link" onclick="openUhrUnit('${r.unit.id}')">${r.unit.name}${isOwn ? ' <span class="badge" style="background:var(--blue-bg); color:var(--blue-text);">Đơn vị bạn</span>' : ''}</td><td>${typeof r.luot !== 'undefined' ? fmtInt(r.luot) : na}</td><td>${typeof r.chung !== 'undefined' ? r.chung.toFixed(2) : na}</td></tr>`;
     }).join('') : '<tr><td colspan="4" style="color:var(--text-muted); font-style:italic;">Không tìm thấy đơn vị phù hợp</td></tr>';
+}
+
+// Popup mức độ hài lòng theo tháng của một đơn vị trong năm đánh giá đang chọn
+let uhrUnitChart = null, uhrUnitCur = null;
+// Dùng lại bộ xuất của quản trị (hlUnitCur); khôi phục hlUnitCur sau đó để nút xuất ở tab "Của đơn vị" không bị đổi đơn vị.
+function withUhrUnit(fn){
+    if (!uhrUnitCur) return;
+    const keep = hlUnitCur; hlUnitCur = uhrUnitCur;
+    try { return fn(); } finally { hlUnitCur = keep; }
+}
+function exportUhrUnitExcel(){ return withUhrUnit(exportHlUnitExcel); }
+function exportUhrUnitWord(){ return withUhrUnit(exportHlUnitWord); }
+function openUhrUnit(unitId){
+    const row = uhrRows.find(r=>r.unit.id===unitId); if (!row) return;
+    const evalYear = Number(document.getElementById('uhr-year-select').value);
+    showLoading(true);
+    db.collection('satisfaction').where('unitId','==',unitId).get().then(snap=>{
+        showLoading(false);
+        const docs = []; snap.forEach(d=>docs.push(d.data()));
+        const months = getUnitSatMonths(evalYear, docs);
+        uhrUnitCur = { name: row.unit.name, evalYear, months };
+        const has = months.map(m=>!!m.q);
+        const vals = months.map(m=> m.q ? m.q.reduce((a,b)=>a+b,0)/5*100 : null);
+        const present = vals.filter(v=>v !== null);
+        const yMin = present.length ? Math.max(0, Math.floor((Math.min(...present) - 2) / 5) * 5) : 0;
+        document.getElementById('uhr-unit-title').innerText = row.unit.name;
+        document.getElementById('uhr-unit-sub').innerText = 'Mức độ hài lòng theo tháng · ' + evalYearLabel(evalYear);
+        document.getElementById('uhr-unit-note').innerText = 'Cột: mức độ hài lòng chung từng tháng (trung bình 5 câu).' + (yMin > 0 ? ` Trục dọc bắt đầu từ ${yMin}% để thấy rõ chênh lệch.` : '') + ' Tháng chưa có số liệu để trống.';
+        document.getElementById('uhr-unit-modal').style.display = '';
+        if (typeof Chart === 'undefined') return;
+        if (uhrUnitChart){ uhrUnitChart.destroy(); uhrUnitChart = null; }
+        uhrUnitChart = new Chart(document.getElementById('uhr-unit-chart'), {
+            type: 'bar',
+            data: { labels: months.map(m=>monthLabel(m.key).replace('Tháng ','T')), datasets: [{ data: vals, backgroundColor: unitId===uhrOwnId ? '#38bdf8' : '#22c55e', borderRadius: 5, maxBarThickness: 26 }] },
+            options: {
+                layout: { padding: { top: 18 } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: item=> `${vals[item.dataIndex].toFixed(2)}% (${fmtInt(months[item.dataIndex].luot)} lượt)` } },
+                    datalabels: { display: ctx=> has[ctx.dataIndex], anchor:'end', align:'end', offset:1, color:'#e6f1ff', font:{ weight:'700', size:8.5 }, formatter: v=> v.toFixed(1) }
+                },
+                scales: {
+                    y: { min: yMin, max: 100, ticks:{ callback:v=>v+'%', font:{size:10} }, grid:{ color:'rgba(148,163,184,0.15)' } },
+                    x: { ticks:{ font:{size:10} }, grid:{ display:false } }
+                },
+                responsive: true, maintainAspectRatio: false
+            }
+        });
+    }).catch(err=>{ showLoading(false); customAlert('Không tải được dữ liệu đơn vị: ' + err.message, 'error'); });
+}
+function closeUhrUnit(){
+    document.getElementById('uhr-unit-modal').style.display = 'none';
+    if (uhrUnitChart){ uhrUnitChart.destroy(); uhrUnitChart = null; }
 }
 // Thẻ thông báo ở Trang chủ: tháng mới nhất đã có số liệu hài lòng của đơn vị (lỗi thì ẩn thẻ, không ảnh hưởng trang chủ)
 function loadHomeHaiLong(){
@@ -2139,6 +2216,7 @@ function openRankUnit(unitId){
         const reportRows = []; repSnap.forEach(d=>reportRows.push(d.data()));
         const officialRows = []; offSnap.forEach(d=>officialRows.push(d.data()));
         const months = buildUnitMonthly(evalYear, reportRows, officialRows);
+        plUnitCur = { name: row.unit.name, evalYear, months };
         document.getElementById('rk-unit-title').innerText = row.unit.name;
         document.getElementById('rk-unit-sub').innerText = 'Tỷ lệ đạt theo tháng · ' + evalYearLabel(evalYear);
         document.getElementById('rk-unit-modal').style.display = '';
@@ -2638,6 +2716,8 @@ async function downloadStyledExcel({ sheet, filename, title, sub, headers, rows,
         row.forEach((v,k)=>{
             const cell = wr.getCell(k+1);
             cell.value = (v === '' || v === undefined) ? null : v;
+            // Chuỗi "96.36%" -> số thật làm tròn 2 chữ số thập phân (Excel tự hiện dấu phẩy/chấm theo cài đặt vùng của máy)
+            if (typeof v === 'string' && PCT_STR.test(v)){ cell.value = Math.round(Number(v.slice(0,-1)) * 100) / 10000; cell.numFmt = '0.00%'; }
             const isLast = boldLast && ri >= rows.length - (boldLast === true ? 1 : boldLast);
             cell.font = font(isLast ? { bold:true } : {});
             if (isLast) cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFDDEBF7'} };
@@ -2661,7 +2741,7 @@ function styledWordBody({ sub, headers, rows, leftCols=[0], boldLast=false, numW
     let oi = 0;
     const widths = headers.map((h,i)=> leftCols.includes(i) ? leftW : fixedW[oi++]);
     const head = '<tr>' + headers.map((h,i)=>`<th width="${widths[i]}%" style="width:${widths[i]}%; border:1px solid #000; padding:5px 4px; background:#1F4E79; color:#fff; text-align:center;${h === 'STT' ? ' white-space:nowrap;' : ''}">${h}</th>`).join('') + '</tr>';
-    const body = rows.map((row,ri)=>'<tr>' + row.map((v,k)=>`<td style="border:1px solid #000; padding:3px 4px;${boldLast && ri >= rows.length - (boldLast === true ? 1 : boldLast) ? ' font-weight:bold; background:#DDEBF7;' : ''} text-align:${leftCols.includes(k) ? 'left' : 'center'};">${v == null ? '' : (typeof v === 'number' && headers[k] !== 'STT' ? fmtInt(v) : v)}</td>`).join('') + '</tr>').join('');
+    const body = rows.map((row,ri)=>'<tr>' + row.map((v,k)=>`<td style="border:1px solid #000; padding:3px 4px;${boldLast && ri >= rows.length - (boldLast === true ? 1 : boldLast) ? ' font-weight:bold; background:#DDEBF7;' : ''} text-align:${leftCols.includes(k) ? 'left' : 'center'};">${v == null ? '' : (typeof v === 'number' && headers[k] !== 'STT' ? fmtInt(v) : pctToVi(v))}</td>`).join('') + '</tr>').join('');
     return `<style>@page{size:A4; margin:2cm 1.5cm;} body{font-family:'Times New Roman',serif; font-size:13pt;} h3{text-align:center; font-size:15pt; margin:0 0 8pt;} p.sub{margin:0 0 10pt; font-style:italic;} td p{margin:0;} table{width:100%; border-collapse:collapse; font-size:12pt;} tr{page-break-inside:avoid;} th{font-weight:bold;}</style>${sub ? `<p class="sub">${sub}</p>` : ''}<table width="100%"><colgroup>${widths.map(w=>`<col width="${w}%" style="width:${w}%">`).join('')}</colgroup>${head}${body}</table>`;
 }
 function ovExportRows(c){ return c.data.map((row,i)=>[i+1, ...row.map((v,j)=>ovCellText(c.cols[j], v))]); }
@@ -3296,7 +3376,7 @@ function renderHaiLongRows(){
     if (sm){
         const { n, avg, chung, luot } = sm;
         const withQ = { length: n };
-        avgRow = `<tr style="background:var(--bg); font-weight:700;"><td></td><td class="unit-name" style="text-align:left;">Trung bình (${withQ.length} đơn vị)</td><td>${fmtInt(luot)}</td>${avg.map(v=>`<td>${fmtNum2(v)}</td>`).join('')}<td>${fmtNum2(chung)}</td></tr>`;
+        avgRow = `<tr style="background:var(--bg); font-weight:700;"><td></td><td class="unit-name" style="text-align:left;">Trung bình (${withQ.length} đơn vị)</td><td${fmtInt(luot).length >= 9 ? ' style="font-size:9px;"' : ''}>${fmtInt(luot)}</td>${avg.map(v=>`<td>${fmtNum2(v)}</td>`).join('')}<td>${fmtNum2(chung)}</td></tr>`;
     }
     document.getElementById('hl-body').innerHTML = rows.length ? avgRow + rows.map(r=>{
         const head = `<td>${r.idx+1}</td><td class="unit-name unit-link" onclick="openHlUnit(${r.idx})">${r.unit.name}</td>`;
