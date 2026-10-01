@@ -1214,11 +1214,11 @@ table.dt tbody tr:hover { background: rgba(56,189,248,.08); }
 <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-auth-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
 // =====================================================================
 // CẤU HÌNH FIREBASE - THAY BẰNG CẤU HÌNH PROJECT FIREBASE CỦA BẠN
@@ -1586,13 +1586,15 @@ function populateFiscalUptoMonthSelect(evalYear){
     }).join('');
     sel.value = capKey;
 }
+let userOfficialMapCur = {};
 function renderFiscalForSelection(){
     const evalYear = Number(document.getElementById('fiscal-eval-year-select').value);
     const uptoKey = document.getElementById('fiscal-upto-month-select').value;
     const { startKey } = fiscalYearRange(monthKey(evalYear, 9));
     const inRange = userHomeRows.filter(r => r.monthKey >= startKey && r.monthKey <= uptoKey && r.hasOfficial);
-    const fTotalS = inRange.reduce((s,r)=>s+r.soLuot,0);
-    const fTotalT = inRange.reduce((s,r)=>s+(r.tongTTHC||0),0);
+    // Lũy kế: cộng số lượt V03 của mọi tháng có số lượt, cộng Tổng TTHC của mọi tháng có báo cáo (độc lập nhau)
+    const fTotalS = Object.keys(userOfficialMapCur).filter(k=>k>=startKey && k<=uptoKey).reduce((s,k)=>s+userOfficialMapCur[k],0);
+    const fTotalT = userHomeRows.filter(r=>r.monthKey>=startKey && r.monthKey<=uptoKey).reduce((s,r)=>s+(r.tongTTHC||0),0);
     const fTyLe = fTotalT>0 ? fTotalS/fTotalT*100 : 0;
     document.getElementById('home-fiscal-tyle').innerText = fTotalT>0 ? fmtPct(fTyLe) : '--';
     document.getElementById('home-fiscal-badge').innerHTML = fTotalT>0 ? badgeHtml(fTyLe>=60) : '';
@@ -1752,6 +1754,7 @@ function loadUserFiscalTab(){
     Promise.all([getUnitReports(), getUnitOfficial()]).then(([rawRows, officialMap])=>{
         showLoading(false);
         userHomeRows = mergeReportsWithOfficial(rawRows, officialMap);
+        userOfficialMapCur = officialMap;
         try {
             const currentEvalYear = fiscalYearRange(currentReportingMonthKey()).evalYear;
             populateFiscalEvalYearSelect(userHomeRows, currentEvalYear);
@@ -2519,32 +2522,29 @@ function getOfficialForMonth(mKey){
         const rows=[]; snap.forEach(d=>rows.push(d.data())); return rows;
     });
 }
-function getReportsCumulative(mKey){
-    const { startKey } = fiscalYearRange(mKey);
-    return db.collection('reports').get().then(snap=>{
-        const map = {};
-        snap.forEach(d=>{
-            const r = d.data();
-            if (r.monthKey && r.monthKey>=startKey && r.monthKey<=mKey){
-                if(!map[r.unitId]) map[r.unitId]={ soLuot:0, tongTTHC:0 };
-                map[r.unitId].soLuot += r.soLuot; map[r.unitId].tongTTHC += (r.tongTTHC||0);
-            }
-        });
-        return map;
+function getRangeRows(col, startKey, endKey){
+    return db.collection(col).where('monthKey','>=',startKey).where('monthKey','<=',endKey).get().then(snap=>{
+        const rows=[]; snap.forEach(d=>rows.push(d.data())); return rows;
     });
 }
-function getOfficialCumulative(mKey){
-    const { startKey } = fiscalYearRange(mKey);
-    return db.collection('official').get().then(snap=>{
-        const map = {};
-        snap.forEach(d=>{
-            const r = d.data();
-            if (r.monthKey && r.monthKey>=startKey && r.monthKey<=mKey){
-                map[r.unitId] = (map[r.unitId]||0) + r.soLuotChinhThuc;
-            }
-        });
-        return map;
+function sumReportsByUnit(rows){
+    const map = {};
+    rows.forEach(r=>{
+        if(!map[r.unitId]) map[r.unitId]={ soLuot:0, tongTTHC:0 };
+        map[r.unitId].soLuot += r.soLuot; map[r.unitId].tongTTHC += (r.tongTTHC||0);
     });
+    return map;
+}
+function sumOfficialByUnit(rows){
+    const map = {};
+    rows.forEach(r=>{ map[r.unitId] = (map[r.unitId]||0) + r.soLuotChinhThuc; });
+    return map;
+}
+function getReportsCumulative(mKey){
+    return getRangeRows('reports', fiscalYearRange(mKey).startKey, mKey).then(sumReportsByUnit);
+}
+function getOfficialCumulative(mKey){
+    return getRangeRows('official', fiscalYearRange(mKey).startKey, mKey).then(sumOfficialByUnit);
 }
 
 // --------- TỔNG QUAN ---------
@@ -2552,8 +2552,10 @@ function renderAdminOverview(){
     const mKey = document.getElementById('admin-ov-month-select').value || currentMonthKey();
     document.getElementById('admin-ov-month-label').innerText = monthLabel(mKey);
     showLoading(true);
-    Promise.all([getReportsForMonth(mKey), getOfficialForMonth(mKey)]).then(([reportRows, officialRows])=>{
+    const { startKey } = fiscalYearRange(mKey);
+    Promise.all([getRangeRows('reports', startKey, mKey), getRangeRows('official', startKey, mKey)]).then(([repAll, offAll])=>{
         showLoading(false);
+        const reportRows = repAll.filter(r=>r.monthKey===mKey), officialRows = offAll.filter(r=>r.monthKey===mKey);
         const reportByUnit = {}; reportRows.forEach(r=>reportByUnit[r.unitId]=r);
         const officialByUnit = {}; officialRows.forEach(r=>officialByUnit[r.unitId]=r.soLuotChinhThuc);
         const total = unitCatalog.length;
@@ -2594,15 +2596,14 @@ function renderAdminOverview(){
         document.getElementById('ov-sum-tthc-m').innerText = fmtInt(numSum(reportRows, r=>r.tongTTHC));
         ['luot-c','tthc-c'].forEach(id=>document.getElementById('ov-sum-' + id).innerText = '-');
         document.getElementById('ov-sum-scope').innerText = '';
-        Promise.all([getReportsCumulative(mKey), getOfficialCumulative(mKey)]).then(([repMap, offMap])=>{
-            if (lastOvMonthKey !== mKey) return;
-            const offVals = Object.values(offMap), repVals = Object.values(repMap);
+        {
+            const offVals = Object.values(sumOfficialByUnit(offAll)), repVals = Object.values(sumReportsByUnit(repAll));
             document.getElementById('ov-sum-luot-c').innerText = fmtInt(offVals.reduce((s,v)=>s+(v||0),0));
             document.getElementById('ov-sum-tthc-c').innerText = fmtInt(repVals.reduce((s,v)=>s+(v.tongTTHC||0),0));
             document.getElementById('ov-sum-scope').innerText = `Tháng: cộng trên ${officialRows.length}/${total} đơn vị có số lượt V03 và ${reportRows.filter(r=>typeof r.tongTTHC === 'number').length}/${total} đơn vị có Tổng TTHC. Lũy kế: ${cumulativePeriodShort(mKey)}.`;
-        });
+        }
 
-        renderOverviewYearChart(mKey);
+        renderOverviewYearChart(mKey, repAll, offAll);
     });
 }
 // Popup danh sách đơn vị từ các ô thống kê Tổng quan
@@ -2760,15 +2761,15 @@ function exportOvListWord(){
         `TongQuan_${meta.file}_${lastOvMonthKey}.doc`);
 }
 function closeOvList(){ document.getElementById('ov-list-modal').style.display = 'none'; }
-function renderOverviewYearChart(mKey){
+function renderOverviewYearChart(mKey, repAll, offAll){
     renderOverviewSatisfactionChart(mKey);
     const months = [];
     for (let k = fiscalYearRange(mKey).startKey; k <= mKey; k = nextMonthKey(k)) months.push(k);
-    Promise.all(months.map(k => Promise.all([getReportsForMonth(k), getOfficialForMonth(k)]))).then(results=>{
-        const dataPoints = results.map(([reportRows, officialRows])=>{
-            const reportByUnit = {}; reportRows.forEach(r=>reportByUnit[r.unitId]=r);
+    {
+        const dataPoints = months.map(k=>{
+            const reportByUnit = {}; repAll.forEach(r=>{ if (r.monthKey===k) reportByUnit[r.unitId]=r; });
             let s=0,t=0;
-            officialRows.forEach(o=>{ const r = reportByUnit[o.unitId]; if(r){ s+=o.soLuotChinhThuc; t+=(r.tongTTHC||0); } });
+            offAll.forEach(o=>{ if (o.monthKey!==k) return; const r = reportByUnit[o.unitId]; if(r){ s+=o.soLuotChinhThuc; t+=(r.tongTTHC||0); } });
             return t>0 ? s/t*100 : 0;
         });
         const ctx = document.getElementById('ov-year-chart');
@@ -2781,7 +2782,7 @@ function renderOverviewYearChart(mKey){
                     datalabels:{ display:c=>c.dataset.data[c.dataIndex] > 0, anchor:'end', align:'end', offset:0, color:'#e6f1ff', font:{ weight:'700', size:9 }, formatter:v=>v.toFixed(0)+'%' } },
                 scales:{ y:{ min:0, suggestedMax:100, ticks:{callback:v=>v+'%'} } }, responsive:true, maintainAspectRatio:false }
         });
-    });
+    }
 }
 // Phản hồi khi bấm Xuất Excel/Word: nút đổi chữ + sáng lên ~1,6 giây để biết lệnh đã được nhận
 document.addEventListener('click', function(e){
@@ -2798,10 +2799,9 @@ function renderOverviewSatisfactionChart(mKey){
     const { startKey } = fiscalYearRange(mKey);
     const months = [];
     for (let k = startKey; k <= mKey; k = nextMonthKey(k)) months.push(k);
-    db.collection('satisfaction').get().then(snap=>{
+    getRangeRows('satisfaction', startKey, mKey).then(rows=>{
         const acc = {}; months.forEach(k=>{ acc[k] = { w:0, sum:0 }; });
-        snap.forEach(d=>{
-            const r = d.data();
+        rows.forEach(r=>{
             if (!acc[r.monthKey] || typeof r.q1 === 'undefined' || !(r.soLuot > 0)) return;
             acc[r.monthKey].w += r.soLuot;
             acc[r.monthKey].sum += r.soLuot * (r.q1 + r.q2 + r.q3 + r.q4 + r.q5) / 5 * 100;
@@ -3297,10 +3297,7 @@ function getSatisfactionForMonth(mKey){
 }
 function getSatisfactionCumulative(mKey){
     const { startKey } = fiscalYearRange(mKey);
-    return db.collection('satisfaction').get().then(snap=>{
-        const docs = []; snap.forEach(d=>{ const r = d.data(); if (r.monthKey && r.monthKey>=startKey && r.monthKey<=mKey) docs.push(r); });
-        return satAggregate(docs);
-    });
+    return getRangeRows('satisfaction', startKey, mKey).then(satAggregate);
 }
 let currentHlTab = 1;
 let hlRows = [];
@@ -3697,12 +3694,14 @@ function plUnitExportRows(){
         typeof m.tyLe !== 'undefined' ? fmtPct(m.tyLe) : '',
         typeof m.tyLe !== 'undefined' ? (m.tyLe>=60 ? 'Đạt' : 'Không Đạt') : ''
     ]);
-    // Dòng lũy kế: cộng các tháng đã có đủ cả số lượt V03 và Tổng TTHC
-    const done = plUnitCur.months.filter(m=>typeof m.tyLe !== 'undefined');
-    if (done.length){
-        const sumOff = done.reduce((t,m)=>t+m.off, 0), sumTthc = done.reduce((t,m)=>t+m.tthc, 0);
+    // Dòng lũy kế: cộng số lượt của mọi tháng có số lượt, cộng Tổng TTHC của mọi tháng có Tổng TTHC (độc lập nhau, tháng trống bỏ qua)
+    const withOff = plUnitCur.months.filter(m=>typeof m.off !== 'undefined');
+    const withTthc = plUnitCur.months.filter(m=>typeof m.tthc !== 'undefined');
+    if (withOff.length && withTthc.length){
+        const sumOff = withOff.reduce((t,m)=>t+m.off, 0), sumTthc = withTthc.reduce((t,m)=>t+m.tthc, 0);
         const tyLe = sumTthc>0 ? sumOff/sumTthc*100 : 0;
-        rows.push(['Lũy kế đến ' + monthLabel(done[done.length-1].key).replace('Tháng','tháng'), sumOff, sumTthc, fmtPct(tyLe), tyLe>=60 ? 'Đạt' : 'Không Đạt']);
+        const last = plUnitCur.months.filter(m=>typeof m.off !== 'undefined' || typeof m.tthc !== 'undefined').pop();
+        rows.push(['Lũy kế đến ' + monthLabel(last.key).replace('Tháng','tháng'), sumOff, sumTthc, fmtPct(tyLe), tyLe>=60 ? 'Đạt' : 'Không Đạt']);
     } else {
         rows.push(['Lũy kế', '', '', '', '']);
     }
