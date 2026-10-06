@@ -720,6 +720,11 @@ table.dt tbody tr:hover { background: rgba(56,189,248,.08); }
           <div class="stat-box red clickable" onclick="openOvList('missing')"><div class="n" id="ov-chuanop">0</div><div class="l">Chưa nộp số liệu <i class="fa-solid fa-chevron-right"></i></div></div>
         </div>
         <div class="card">
+          <h2>Hoạt động gần đây</h2>
+          <button class="btn btn-outline" style="margin-bottom:8px;" onclick="exportUsageStats()"><i class="fa-solid fa-file-excel"></i> Xuất thống kê lượt sử dụng</button>
+          <div id="ov-activity-list"><div class="note">Đang tải...</div></div>
+        </div>
+        <div class="card">
           <h2>Tỷ lệ số lượt đánh giá toàn tỉnh theo tháng</h2>
           <div class="note" style="font-size:11.5px; margin-bottom:6px;">Tỷ lệ = tổng số lượt đánh giá V03 ÷ tổng số TTHC của tháng đó; có thể vượt 100%.</div>
           <div class="chart-wrap"><canvas id="ov-year-chart"></canvas></div>
@@ -1402,6 +1407,7 @@ function processLogin(){
         currentRole = currentUserDoc.role;
         localStorage.setItem('vneid_username', username);
         localStorage.setItem('vneid_role', currentRole);
+        logActivity('login');
         enterApp();
     }).catch(err=>{ showLoading(false); customAlert('Lỗi: '+err.message, 'error'); });
 }
@@ -2372,6 +2378,7 @@ function saveMonthlyReport(){
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }).then(()=>{
         showLoading(false);
+        logActivity('report', mKey);
         customAlert('Đã lưu số liệu ' + monthLabel(mKey).toLowerCase() + '!');
         populateInputMonthSelect();
         loadInputForMonth();
@@ -2507,9 +2514,72 @@ function onAdminYearChange(name){
     populateAdminMonths(name, Number(document.getElementById(ADMIN_PERIOD_TABS[name].year).value));
     ADMIN_PERIOD_TABS[name].reload();
 }
+// --------- NHẬT KÝ HOẠT ĐỘNG (đăng nhập / nhập liệu của đơn vị) ---------
+function logActivity(type, monthKey){
+    if (!currentUserDoc || currentRole === 'admin') return;
+    const rec = { type, username: currentUserDoc.username, unitName: currentUserDoc.unitName || currentUserDoc.username,
+                  ts: firebase.firestore.FieldValue.serverTimestamp() };
+    if (monthKey) rec.monthKey = monthKey;
+    db.collection('activity').add(rec).catch(()=>{});
+    // Bộ đếm tích lũy (1 doc duy nhất) để thống kê tổng lượt mà không phải đọc lại toàn bộ nhật ký
+    const inc = firebase.firestore.FieldValue.increment(1);
+    const k = type === 'login' ? 'login' : 'report';
+    db.collection('stats').doc('usage').set({
+        ['total' + (k === 'login' ? 'Login' : 'Report')]: inc,
+        byUnit: { [rec.username]: { unitName: rec.unitName, [k]: inc, ['last' + (k === 'login' ? 'Login' : 'Report')]: rec.ts } }
+    }, { merge: true }).catch(()=>{});
+}
+// Xuất thống kê lượt sử dụng tích lũy (đọc 1 doc)
+function exportUsageStats(){
+    showLoading(true);
+    db.collection('stats').doc('usage').get().then(doc=>{
+        showLoading(false);
+        const d = doc.exists ? doc.data() : {};
+        const byUnit = d.byUnit || {};
+        const fmt = t => t && t.toDate ? t.toDate().toLocaleString('vi-VN') : '';
+        const rows = Object.keys(byUnit).map(u=>({ u, ...byUnit[u] }))
+            .sort((a,b)=>(b.login||0)-(a.login||0))
+            .map((r,i)=>[i+1, r.unitName||'', r.u, r.login||0, r.report||0, fmt(r.lastLogin), fmt(r.lastReport)]);
+        rows.push(['', 'TỔNG', '', d.totalLogin||0, d.totalReport||0, '', '']);
+        const since = d.since && d.since.toDate ? d.since.toDate().toLocaleDateString('vi-VN') : 'khi bật tính năng';
+        return downloadStyledExcel({ sheet:'Luot su dung', filename:'ThongKe_LuotSuDung.xlsx',
+            title:'THỐNG KÊ LƯỢT SỬ DỤNG ỨNG DỤNG', sub:'Tính từ ' + since + ' · xuất lúc ' + new Date().toLocaleString('vi-VN'),
+            headers:['STT','Đơn vị','Tên đăng nhập','Số lượt đăng nhập','Số lần nhập liệu','Đăng nhập gần nhất','Nhập liệu gần nhất'],
+            rows, leftCols:[1,2], boldLast:true, autoFit:true });
+    }).catch(err=>{ showLoading(false); customAlert('Lỗi: '+err.message, 'error'); });
+}
+function activityText(a){
+    const act = a.type === 'login' ? 'đăng nhập' : 'nhập liệu' + (a.monthKey ? ' ' + monthLabel(a.monthKey) : '');
+    const t = a.ts && a.ts.toDate ? a.ts.toDate().toLocaleString('vi-VN') : '...';
+    return a.unitName + ' (' + a.username + ') ' + act + ' (thời gian: ' + t + ')';
+}
+let activityUnsub = null;
+function startActivityFeed(){
+    if (activityUnsub) return;
+    db.collection('stats').doc('usage').get().then(doc=>{
+        if (!doc.exists || !doc.data().since) db.collection('stats').doc('usage').set({ since: firebase.firestore.FieldValue.serverTimestamp() }, { merge:true });
+    }).catch(()=>{});
+    let first = true;
+    activityUnsub = db.collection('activity').orderBy('ts','desc').limit(20).onSnapshot(snap=>{
+        const box = document.getElementById('ov-activity-list');
+        if (box){
+            const items = [];
+            snap.forEach(d=>items.push(d.data()));
+            box.innerHTML = items.length
+                ? items.map(a=>'<div style="padding:7px 0; border-bottom:1px solid var(--border,#e5e7eb); font-size:12.5px;">'+activityText(a)+'</div>').join('')
+                : '<div class="note">Chưa có hoạt động nào.</div>';
+        }
+        if (!first) snap.docChanges().forEach(c=>{ if (c.type==='added' && !c.doc.metadata.hasPendingWrites && c.doc.data().ts) customAlert(activityText(c.doc.data())); });
+        first = false;
+    }, err=>{
+        const box = document.getElementById('ov-activity-list');
+        if (box) box.innerHTML = '<div class="note">Không đọc được nhật ký: ' + err.message + ' (kiểm tra Firestore Rules cho collection activity).</div>';
+    });
+}
 function initAdminApp(){
     Object.keys(ADMIN_PERIOD_TABS).forEach(setupAdminPeriod);
     showAdminSub('tongquan');
+    startActivityFeed();
 }
 
 function getReportsForMonth(mKey){
