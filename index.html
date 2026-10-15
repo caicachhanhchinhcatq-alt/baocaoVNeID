@@ -288,6 +288,60 @@ table.dt tbody tr:hover { background: rgba(56,189,248,.08); }
 .medal.m2 { background:linear-gradient(135deg,#f1f5f9,#94a3b8); box-shadow:0 0 8px rgba(148,163,184,.45); }
 .medal.m3 { background:linear-gradient(135deg,#fdba74,#c2410c); box-shadow:0 0 8px rgba(234,88,12,.45); }
 @media (prefers-reduced-motion: reduce) { .user-sub.active, .admin-sub.active, .modal-box { animation: none; } }
+/* ===== GIAO DIỆN LAPTOP (màn hình ≥ 1024px): menu dọc bên trái, nội dung rộng. Điện thoại không bị ảnh hưởng; xóa cả khối này là về như cũ ===== */
+@media (min-width: 1024px) {
+  /* Khung: bỏ giới hạn 430px, chừa chỗ cho menu trái */
+  .app-shell { max-width:none; margin:0; padding-left:248px; padding-bottom:0; min-height:100vh; }
+  .app-title-banner { padding:16px 32px; }
+  .app-title-banner img { width:46px; height:46px; }
+  .app-title-banner .ttl { font-size:16px; }
+  .content-pad { max-width:1240px; margin:0 auto; padding:24px 32px 12px; }
+  .page-title { font-size:24px; }
+  .card { padding:20px 22px; border-radius:16px; }
+  .card h2 { font-size:16px; }
+  .app-credit-bar .credit-text { font-size:11px; }
+
+  /* Menu: thanh dọc cố định bên trái, biểu tượng + chữ nằm ngang */
+  .bottom-nav { top:0; right:auto; bottom:0; width:248px; flex-direction:column; justify-content:flex-start; gap:4px; padding:20px 12px; border-top:none; border-right:1px solid var(--border); overflow-y:auto; }
+  .bottom-nav .nav-btn { flex:none; display:flex; align-items:center; gap:12px; text-align:left; padding:12px 14px; border-radius:10px; font-size:14px; font-weight:600; }
+  .bottom-nav .nav-btn i { display:inline-block; width:22px; margin:0; font-size:16px; text-align:center; }
+  .bottom-nav .nav-btn:hover { background:var(--blue-bg); color:var(--text-main); }
+  .bottom-nav .nav-btn.active { background:var(--blue-bg); }
+  .bottom-nav .nav-btn.active::before { top:20%; bottom:20%; left:0; right:auto; width:3px; height:auto; border-radius:0 3px 3px 0; }
+  .bottom-nav .nav-btn.active i { transform:none; }
+
+  /* Ô nhập, nút: không kéo giãn hết bề ngang rộng */
+  .btn { width:auto; min-width:180px; margin-left:auto; margin-right:auto; padding:12px 28px; }
+  .btn-row { justify-content:center; }
+  .btn-row .btn { flex:0 1 240px; }
+  .btn:hover { filter:brightness(1.1); }
+  .stat-box .n { font-size:26px; }
+  .stat-box .l { font-size:12.5px; }
+  .big-metric .val { font-size:44px; }
+
+  /* Bảng: chữ to hơn, tận dụng bề ngang */
+  table.dt { font-size:14px; }
+  table.dt th { font-size:12.5px; }
+  table.dt.dt-fit { font-size:13.5px; }
+  table.dt.dt-fit th { font-size:12px; }
+  table.dt.hl-table { font-size:13px; }
+  table.dt.hl-table th { font-size:12px; }
+  table.dt th, table.dt td { padding-top:11px; padding-bottom:11px; }
+  table.dt.dt-fit th, table.dt.dt-fit td { padding:10px 6px; }
+  table.dt.hl-table th, table.dt.hl-table td { padding:10px 4px; }
+  .fiscal-tbl { font-size:13.5px; }
+  .fiscal-tbl th { font-size:12px; }
+  .chart-wrap { height:260px; }
+  .sort-bar button, .subtab-row button { font-size:13px; padding:9px 14px; }
+  .subtab-row { max-width:720px; }
+  .rank-sub { font-size:12.5px; }
+
+  /* Popup rộng hơn; popup có bảng rộng nhất */
+  .modal-box { max-width:560px; }
+  .modal-box:has(table.dt) { max-width:860px; }
+  .modal-box.done-modal { max-width:420px; }
+  .login-card { max-width:420px; }
+}
 </style>
 </head>
 <body>
@@ -408,7 +462,7 @@ table.dt tbody tr:hover { background: rgba(56,189,248,.08); }
             <span style="font-size:13px; color:var(--text-muted);">Tỷ lệ theo số bạn báo cáo (tạm tính, không phải kết quả chính thức)</span>
             <span id="input-ratio-preview" style="font-weight:800; font-size:16px;">Chưa nhập</span>
           </div>
-          <button class="btn btn-black" onclick="saveMonthlyReport()">Lưu số liệu tháng</button>
+          <button class="btn btn-black" id="input-save-btn" onclick="saveMonthlyReport()">Lưu số liệu tháng</button>
         </div>
       </div>
     </div>
@@ -2271,6 +2325,27 @@ function closeRankUnit(){
     if (rankUnitChart){ rankUnitChart.destroy(); rankUnitChart = null; }
 }
 let inputReported = new Set();
+// Nhập liệu của đơn vị: tại mỗi thời điểm chỉ MỘT tháng được nhập - tháng đã mở gần nhất. Tháng M mở từ ngày 15/M
+// (kỳ số liệu kết thúc 14/M) và đóng khi tháng M+1 mở (15/M+1), nên trong thời gian đó vẫn nhập muộn được.
+// Tháng cũ hơn bị khóa (chỉ Quản trị sửa/nhập hộ); tháng chưa đến ngày 15 thì chưa được nhập. Ô chọn tháng mặc định: tháng hiện tại.
+function inputDefaultMonthKey(){ return currentMonthKey(); }
+function inputLatestOpenMonthKey(){
+    const cur = currentMonthKey();
+    return new Date().getDate() >= 15 ? cur : prevMonthKey(cur);
+}
+function inputMonthState(mKey){
+    const o = inputLatestOpenMonthKey();
+    return mKey === o ? 'open' : (mKey > o ? 'future' : 'locked');
+}
+function isInputMonthOpen(mKey){ return inputMonthState(mKey) === 'open'; }
+function inputBlockedMsg(mKey){
+    const openLbl = monthLabel(inputLatestOpenMonthKey());
+    if (inputMonthState(mKey) === 'future'){
+        const [y,m] = mKey.split('-').map(Number);
+        return `Chưa đến thời gian nhập số liệu ${monthLabel(mKey).toLowerCase()} (nhập từ ngày 15/${pad2(m)}/${y}). Nhập trước có thể thiếu và lệch so với số liệu chuẩn của V03. Hiện đang mở nhập ${openLbl}.`;
+    }
+    return `${monthLabel(mKey)} đã khóa nhập (hiện chỉ nhập được ${openLbl}). Cần chỉnh sửa vui lòng liên hệ Quản trị.`;
+}
 // Tháng báo cáo vừa chốt số liệu gần nhất (kỳ số liệu 15/(M-1) – 14/M) và mức cảnh báo theo ngày hôm nay
 function inputDeadlineInfo(){
     const d = new Date(), day = d.getDate();
@@ -2297,12 +2372,12 @@ function renderInputPeriodNote(mKey){
 function fillInputMonths(evalYear){
     const sel = document.getElementById('input-month-select');
     const { startKey, endKey } = fiscalYearRange(monthKey(evalYear, 9));
-    const curKey = currentReportingMonthKey();
+    const curKey = inputDefaultMonthKey();
     let k = endKey < curKey ? endKey : curKey;
     const firstKey = k;
     const opts = [];
     while (k >= startKey){
-        opts.push(`<option value="${k}">${monthLabel(k)} (${reportingPeriodShort(k)})` + (inputReported.has(k) ? ' — Đã nhập' : ' — Chưa nhập') + `</option>`);
+        opts.push(`<option value="${k}">${monthLabel(k)} (${reportingPeriodShort(k)})` + (inputMonthState(k) === 'future' ? ' — Chưa đến kỳ nhập' : (inputMonthState(k) === 'locked' ? ' — Đã khóa' : (inputReported.has(k) ? ' — Đã nhập' : ' — Chưa nhập'))) + `</option>`);
         k = prevMonthKey(k);
     }
     sel.innerHTML = opts.join('');
@@ -2315,7 +2390,7 @@ function onInputYearChange(){
 function populateInputMonthSelect(){
     getUnitReports().then(rows=>{
         inputReported = new Set(rows.map(r=>r.monthKey));
-        const curYear = fiscalYearRange(currentReportingMonthKey()).evalYear;
+        const curYear = fiscalYearRange(inputDefaultMonthKey()).evalYear;
         const yearSel = document.getElementById('input-year-select');
         let html = '';
         for (let i=0; i<=ADMIN_EVAL_YEARS_BACK; i++) html += `<option value="${curYear-i}">${adminEvalYearLabel(curYear-i)}</option>`;
@@ -2335,21 +2410,25 @@ function loadInputForMonth(){
     document.getElementById('input-tongtthc').value = '';
     computeInputRatio();
     const box = document.getElementById('input-status-box');
+    const state = inputMonthState(mKey), open = state === 'open';
+    const blockedBox = `<div class="warn-box"><i class="fa-solid fa-triangle-exclamation"></i> ${inputBlockedMsg(mKey)}</div>`;
+    ['input-soluot','input-tongtthc','input-save-btn'].forEach(id=>{ document.getElementById(id).disabled = !open; });
+    if (state === 'future'){ box.innerHTML = blockedBox; return; }
     box.innerHTML = `<div class="notice-box"><i class="fa-solid fa-spinner fa-spin"></i> Đang kiểm tra số liệu tháng này...</div>`;
     db.collection('reports').doc(unitId+'_'+mKey).get().then(doc=>{
         if (document.getElementById('input-month-select').value !== mKey) return; // đã chuyển sang tháng khác
         if (doc.exists){
-            box.innerHTML = `<div class="notice-box"><i class="fa-solid fa-circle-check"></i> Tháng này đã có số liệu, có thể chỉnh sửa lại.</div>`;
+            box.innerHTML = open ? `<div class="notice-box"><i class="fa-solid fa-circle-check"></i> Tháng này đã có số liệu, có thể chỉnh sửa lại.</div>` : blockedBox;
             document.getElementById('input-soluot').value = doc.data().soLuot;
             document.getElementById('input-tongtthc').value = doc.data().tongTTHC;
             computeInputRatio();
         } else {
-            box.innerHTML = `<div class="warn-box"><i class="fa-solid fa-triangle-exclamation"></i> Tháng này chưa có số liệu, vui lòng nhập mới.</div>`;
+            box.innerHTML = open ? `<div class="warn-box"><i class="fa-solid fa-triangle-exclamation"></i> Tháng này chưa có số liệu, vui lòng nhập mới.</div>` : blockedBox;
         }
     }).catch(err=>{
         if (document.getElementById('input-month-select').value !== mKey) return;
         console.error('[loadInputForMonth] Lỗi khi tải số liệu tháng:', err);
-        box.innerHTML = `<div class="warn-box"><i class="fa-solid fa-triangle-exclamation"></i> Tháng này chưa có số liệu, vui lòng nhập mới.</div>`;
+        box.innerHTML = open ? `<div class="warn-box"><i class="fa-solid fa-triangle-exclamation"></i> Tháng này chưa có số liệu, vui lòng nhập mới.</div>` : blockedBox;
     });
 }
 function computeInputRatio(){
@@ -2365,6 +2444,7 @@ function computeInputRatio(){
 function saveMonthlyReport(){
     triggerHaptic();
     const mKey = document.getElementById('input-month-select').value;
+    if (!isInputMonthOpen(mKey)){ customAlert(inputBlockedMsg(mKey), 'error'); return; }
     const soLuot = parseInt(document.getElementById('input-soluot').value);
     const tongTTHC = parseInt(document.getElementById('input-tongtthc').value);
     if (isNaN(soLuot) || isNaN(tongTTHC) || soLuot<0 || tongTTHC<0){ customAlert('Vui lòng nhập đầy đủ số liệu hợp lệ!', 'error'); return; }
